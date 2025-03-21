@@ -1,24 +1,25 @@
 import React from "react";
-import { View, StyleSheet, StatusBar, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, StyleSheet, StatusBar, Platform, Text } from "react-native";
+import Header from "../components/Header";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 10,
     backgroundColor: "white",
     alignItems: "center",
+  },
+  content: {
+    width: "100%",
+    paddingHorizontal: 10,
   },
 });
 
 export default function DefaultLayout({ children }) {
   return (
     <View style={styles.container}>
-      {Platform.OS === "ios" ? (
-        <SafeAreaView>{children}</SafeAreaView>
-      ) : (
-        <>{children}</>
-      )}
+      <Header />
+
+      <View style={styles.content}>{children}</View>
       <StatusBar style="auto" />
     </View>
   );
