@@ -2401,6 +2401,8 @@ big-integer@1.6.x:
     expo-status-bar "~2.0.0"
     react "18.3.1"
     react-native "0.76.5"
+    react-native-element-dropdown "^2.12.4"
+    react-native-material-datetime-picker "^0.2.1"
     react-native-safe-area-context "^5.3.0"
     react-native-vector-icons "^10.2.0"
     react-navigation "^5.0.0"
@@ -5149,6 +5151,18 @@ react-is@^18.0.0, react-is@^18.2.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react-is/-/react-is-18.3.1.tgz"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
+
+react-native-element-dropdown@^2.12.4:
+  version "2.12.4"
+  resolved "https://registry.npmjs.org/react-native-element-dropdown/-/react-native-element-dropdown-2.12.4.tgz"
+  integrity sha512-abZc5SVji9FIt7fjojRYrbuvp03CoeZJrgvezQoDoSOrpiTqkX69ix5m+j06W2AVncA0VWvbT+vCMam8SoVadw==
+  dependencies:
+    lodash "^4.17.21"
+
+react-native-material-datetime-picker@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.npmjs.org/react-native-material-datetime-picker/-/react-native-material-datetime-picker-0.2.1.tgz"
+  integrity sha512-mSb6bOMjBlHUVwjm2jyV+TJa3+6OKCvRMjYpvUrWNBQaEzdUHwKN5ayXdZ1Rw3HmzoU9qe98LAfF8nHS89GwYA==
 
 react-native-safe-area-context@^5.3.0, "react-native-safe-area-context@>= 4.0.0":
   version "5.3.0"

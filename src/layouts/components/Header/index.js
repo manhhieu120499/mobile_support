@@ -1,7 +1,8 @@
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, Pressable } from "react-native";
 import { View, Text, StyleSheet } from "react-native";
 import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const styles = StyleSheet.create({
   container: {
@@ -22,18 +23,27 @@ const styles = StyleSheet.create({
     fontWeight: 550,
     color: "white",
   },
-  iconInContainerTitle: {
+  iconLeftInContainerTitle: {
     position: "absolute",
     right: 20,
   },
+  iconRightInContainerTitle: {
+    position: "absolute",
+    left: 20,
+  },
+
   content: {
     width: "100%",
-    backgroundColor: "red",
-    paddingLeft: 12,
+    paddingHorizontal: 20,
   },
 });
 
-export default function Header({ children }) {
+export default function Header({
+  children,
+  leftIcon,
+  rightIcon,
+  handleOnPressRightIcon,
+}) {
   return (
     <View
       style={[
@@ -52,13 +62,20 @@ export default function Header({ children }) {
           },
         ]}
       >
+        {leftIcon && (
+          <Pressable
+            style={styles.iconRightInContainerTitle}
+            onPress={handleOnPressRightIcon}
+          >
+            <MaterialIcons name={leftIcon} size={24} color={"white"} />
+          </Pressable>
+        )}
         <Text style={styles.title}>Booking.com</Text>
-        <FontAwesome6Icon
-          name="bell"
-          size={24}
-          color={"white"}
-          style={styles.iconInContainerTitle}
-        />
+        {rightIcon && (
+          <Pressable style={styles.iconLeftInContainerTitle}>
+            <FontAwesome6Icon name={rightIcon} size={24} color={"white"} />
+          </Pressable>
+        )}
       </View>
       {children && <View style={styles.content}>{children}</View>}
     </View>
