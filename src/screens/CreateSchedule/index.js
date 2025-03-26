@@ -15,6 +15,7 @@ import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { renderTime, axiosConfig } from "../../utilities";
 import { useDebounce } from "../../hooks";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const style = StyleSheet.create({
   container: {
@@ -88,6 +89,7 @@ export default function CreateSchedule({ navigation, route }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [inputSearch, setInputSearch] = useState("");
   const debounceValue = useDebounce(inputSearch, 200);
+  const [roomsDataDefault, setRoomsDataDefault] = useState([]);
 
   // info push modal
   const branchOption = {
@@ -134,6 +136,7 @@ export default function CreateSchedule({ navigation, route }) {
       );
 
       setRoomsData(res.data);
+      setRoomsDataDefault(res.data);
     } catch (err) {
       console.log(err.response);
     }
@@ -150,16 +153,39 @@ export default function CreateSchedule({ navigation, route }) {
       fetchRoomData();
     } else {
       const regex = new RegExp(debounceValue, "gi");
-      setRoomsData((prev) => prev.filter((room) => room.roomName.match(regex)));
+      setRoomsData((prev) =>
+        roomsDataDefault.filter((room) => room.roomName.match(regex))
+      );
     }
   }, [debounceValue]);
+
+  // lưu tạm thông tin userCurrent
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axiosConfig().get(
+          "/api/v1/employee/getEmployeeByPhone?phone=0914653331"
+        );
+        await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
+      } catch (err) {
+        console.log(err);
+      }
+    })();
+  }, []);
+
+  // xử lý chuyển đến trang đặt phòng
+  const handleTransferScreenRegisterRoom = ({ roomId, roomName }) => {
+    navigation.navigate("InfoRoomRegister", {
+      infoRoom: { roomId: roomId, roomName: roomName },
+    });
+  };
 
   return (
     <DefaultLayout>
       <Header
         leftIcon={"menu"}
         rightIcon={"bell"}
-        handleOnPressRightIcon={() => setIsOpenModal(true)}
+        handleOnPressLeftIcon={() => setIsOpenModal(true)}
       >
         <View style={style.containerFilterSearch}>
           <TextInput
@@ -184,7 +210,13 @@ export default function CreateSchedule({ navigation, route }) {
           >
             {roomsData.length != 0 &&
               roomsData.map((roomItem) => (
-                <CardRoom key={roomItem.roomId} roomInfo={roomItem} />
+                <CardRoom
+                  key={roomItem.roomId}
+                  roomInfo={roomItem}
+                  handleRegisterRoom={({ roomId, roomName }) =>
+                    handleTransferScreenRegisterRoom({ roomId, roomName })
+                  }
+                />
               ))}
           </ScrollView>
         </View>

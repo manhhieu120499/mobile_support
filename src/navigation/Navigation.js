@@ -19,7 +19,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="InfoRoomRegister"
+        initialRouteName="Tabs"
         screenOptions={{
           headerShown: false,
         }}

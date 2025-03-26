@@ -43,6 +43,7 @@ export default function Header({
   leftIcon,
   rightIcon,
   handleOnPressRightIcon,
+  handleOnPressLeftIcon,
 }) {
   return (
     <View
@@ -65,7 +66,7 @@ export default function Header({
         {leftIcon && (
           <Pressable
             style={styles.iconRightInContainerTitle}
-            onPress={handleOnPressRightIcon}
+            onPress={handleOnPressLeftIcon}
           >
             <MaterialIcons name={leftIcon} size={24} color={"white"} />
           </Pressable>

@@ -101,6 +101,7 @@ export default function ModalSideBar({
                   branchOption.setBranchValue(item.name)
                 }
                 labelOfValue={"name"}
+                valueField={"name"}
               />
             </View>
             <View style={style.contentItem}>
@@ -115,6 +116,7 @@ export default function ModalSideBar({
                   timeStartOption.setTimeStart(item.time)
                 }
                 labelOfValue={"time"}
+                valueField={"time"}
                 nameIcon="clock"
               />
             </View>
@@ -125,6 +127,7 @@ export default function ModalSideBar({
                 value={timeEndOption.timeEnd}
                 handleOnChange={timeEndOption.setTimeEnd}
                 labelOfValue={"time"}
+                valueField={"time"}
                 nameIcon="clock"
               />
             </View>
@@ -144,10 +147,7 @@ export default function ModalSideBar({
                   placeholder="Nhập sức chứa"
                   value={capacityOption.capacity}
                   keyboardType="numeric"
-                  onChangeText={(text) =>
-                    Number.parseInt(text) > 0 &&
-                    capacityOption.setCapacity(text)
-                  }
+                  onChangeText={(text) => capacityOption.setCapacity(text)}
                   style={{ fontSize: 18, height: "100%", paddingLeft: 12 }}
                 />
               </View>

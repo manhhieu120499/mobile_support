@@ -39,7 +39,7 @@ const style = StyleSheet.create({
   },
 });
 
-export default function CardRoom({ roomInfo }) {
+export default function CardRoom({ roomInfo, handleRegisterRoom }) {
   const {
     roomName = "",
     capacity,
@@ -150,6 +150,12 @@ export default function CardRoom({ roomInfo }) {
               justifyContent: "center",
               borderRadius: 8,
             }}
+            onPress={() =>
+              handleRegisterRoom({
+                roomId: roomInfo.roomId,
+                roomName: roomName,
+              })
+            }
           >
             <Text style={{ fontSize: 15, fontWeight: "bold", color: "white" }}>
               Đặt ngay

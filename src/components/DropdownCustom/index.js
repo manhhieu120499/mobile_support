@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const style = StyleSheet.create({
   dropdown: {
@@ -46,6 +46,9 @@ export default function DropdownCustom({
   labelOfValue,
   nameIcon = "house-chimney",
   isVisibleSearch = true,
+  valueField = labelOfValue,
+  placeholder,
+  isDisable = false,
 }) {
   const [isFocus, setIsFocus] = useState(false);
   return (
@@ -59,8 +62,8 @@ export default function DropdownCustom({
       search={isVisibleSearch}
       maxHeight={300}
       labelField={labelOfValue}
-      valueField={labelOfValue}
-      placeholder={!isFocus ? `Select ${labelOfValue}` : "..."}
+      valueField={valueField}
+      placeholder={!isFocus ? `${placeholder}` : "..."}
       searchPlaceholder="Search..."
       value={value}
       onFocus={() => setIsFocus(true)}
@@ -70,13 +73,14 @@ export default function DropdownCustom({
         setIsFocus(false);
       }}
       renderLeftIcon={() => (
-        <FontAwesome6Icon
+        <MaterialIcons
           style={style.icon}
           color={isFocus ? "blue" : "black"}
           name={nameIcon}
           size={20}
         />
       )}
+      disable={isDisable}
     />
   );
 }
