@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,13 @@ import {
   TextInput,
   Animated,
   Dimensions,
+  Pressable,
 } from "react-native";
 import DropdownCustom from "../DropdownCustom";
 import { renderTime } from "../../utilities";
+import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import ModalTime from "../ModalTime";
+import ModalCalendar from "../ModalCalendar";
 
 // data branch fake
 const dataBranch = [
@@ -72,11 +76,12 @@ export default function ModalSideBar({
   timeStartOption,
   capacityOption,
   timeEndOption,
+  selectedDateOption,
   onCloseModal,
   isVisible,
 }) {
   const translateX = useRef(new Animated.Value(width)).current;
-
+  const [isOpenModalSelectedDate, setIsOpenModalSelectedDate] = useState(false);
   useEffect(() => {
     Animated.timing(translateX, {
       toValue: isVisible ? 0 : -width, // Trượt vào nếu mở, trượt ra nếu đóng
@@ -102,10 +107,37 @@ export default function ModalSideBar({
                 }
                 labelOfValue={"name"}
                 valueField={"name"}
+                nameIcon="other-houses"
               />
             </View>
             <View style={style.contentItem}>
               <Text style={style.labelFilter}>Ngày</Text>
+              <View
+                style={[
+                  style.contentItem,
+                  {
+                    flexDirection: "row",
+                    borderWidth: 1,
+                    borderColor: "#b8b8b8",
+                    alignItems: "center",
+                    height: 45,
+                    borderRadius: 5,
+                  },
+                ]}
+              >
+                <TextInput
+                  placeholder="Ngày hiện tại"
+                  style={{ height: "100%", width: "85%" }}
+                  value={selectedDateOption.selectedDate}
+                  editable={false}
+                />
+                <Pressable
+                  style={{ width: "15%", alignItems: "center" }}
+                  onPress={() => setIsOpenModalSelectedDate(true)}
+                >
+                  <MaterialIcon name="calendar-month" size={20} />
+                </Pressable>
+              </View>
             </View>
             <View style={style.contentItem}>
               <Text style={style.labelFilter}>Thời gian bắt đầu</Text>
@@ -117,7 +149,7 @@ export default function ModalSideBar({
                 }
                 labelOfValue={"time"}
                 valueField={"time"}
-                nameIcon="clock"
+                nameIcon="punch-clock"
               />
             </View>
             <View style={style.contentItem}>
@@ -128,7 +160,7 @@ export default function ModalSideBar({
                 handleOnChange={timeEndOption.setTimeEnd}
                 labelOfValue={"time"}
                 valueField={"time"}
-                nameIcon="clock"
+                nameIcon="punch-clock"
               />
             </View>
             <View style={style.contentItem}>
@@ -166,6 +198,15 @@ export default function ModalSideBar({
               style={{ width: "20%", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
             />
           </TouchableWithoutFeedback>
+
+          {/** Modal selected date */}
+          <ModalCalendar
+            isOpenModal={isOpenModalSelectedDate}
+            handleOnModal={(selectedDate) => {
+              selectedDateOption.setSelectedDate(selectedDate);
+              setIsOpenModalSelectedDate(false);
+            }}
+          />
         </Animated.View>
       </View>
     </Modal>
