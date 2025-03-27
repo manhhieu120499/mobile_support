@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-around",
     position: "relative",
   },
   title: {
@@ -24,19 +24,53 @@ const styles = StyleSheet.create({
     color: "white",
   },
   iconLeftInContainerTitle: {
-    position: "absolute",
-    right: 20,
+    height: 30,
+    width: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconRightInContainerTitle: {
-    position: "absolute",
-    left: 20,
+    height: 30,
+    width: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   content: {
     width: "100%",
     paddingHorizontal: 20,
+    alignItems: "center",
+    paddingBottom: 5,
   },
 });
+
+const renderHeightHeaderByScreen = (nameScreen, platForm) => {
+  if (platForm == "ios") {
+    switch (nameScreen.toLowerCase()) {
+      case "inforoomregister": {
+        return 110;
+      }
+      case "scheduledeatilroom": {
+        return 120;
+      }
+      default: {
+        return 150;
+      }
+    }
+  } else if (platForm == "android") {
+    switch (nameScreen.toLowerCase()) {
+      case "inforoomregister": {
+        return 100;
+      }
+      case "scheduledeatilroom": {
+        return 90;
+      }
+      default: {
+        return 120;
+      }
+    }
+  }
+};
 
 export default function Header({
   children,
@@ -44,13 +78,14 @@ export default function Header({
   rightIcon,
   handleOnPressRightIcon,
   handleOnPressLeftIcon,
+  nameScreen = "",
 }) {
   return (
     <View
       style={[
         styles.container,
         {
-          height: Platform.OS === "ios" ? 150 : 120,
+          height: renderHeightHeaderByScreen(nameScreen, Platform.OS),
           paddingTop: Platform.OS === "ios" ? 15 : 0,
         },
       ]}
@@ -65,15 +100,15 @@ export default function Header({
       >
         {leftIcon && (
           <Pressable
-            style={styles.iconRightInContainerTitle}
+            style={styles.iconLeftInContainerTitle}
             onPress={handleOnPressLeftIcon}
           >
             <MaterialIcons name={leftIcon} size={24} color={"white"} />
           </Pressable>
         )}
-        <Text style={styles.title}>Booking.com</Text>
+        <Text style={styles.title}>Booking Manager App</Text>
         {rightIcon && (
-          <Pressable style={styles.iconLeftInContainerTitle}>
+          <Pressable style={styles.iconRightInContainerTitle}>
             <FontAwesome6Icon name={rightIcon} size={24} color={"white"} />
           </Pressable>
         )}
