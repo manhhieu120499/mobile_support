@@ -29,6 +29,7 @@ export default function GroupServeItem({ item, handleChooseItemRemove }) {
               return !prev;
             })
           }
+          style={{ width: 30, height: 30 }}
         />
       </View>
       <View

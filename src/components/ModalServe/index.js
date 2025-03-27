@@ -17,6 +17,8 @@ export default function ModalServe({
   handleCloseModal,
   handleRemoveItem,
   handleAcceptedRemoveItem,
+  title,
+  type,
 }) {
   return (
     <>
@@ -60,6 +62,18 @@ export default function ModalServe({
               >
                 <MaterialIcons name="close" size={22} color={"black"} />
               </Pressable>
+              {title && (
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    marginBottom: 4,
+                  }}
+                >
+                  {title}
+                </Text>
+              )}
               <View
                 style={{
                   borderWidth: 1,
@@ -95,7 +109,7 @@ export default function ModalServe({
                   alignItems: "center",
                   justifyContent: "center",
                 }}
-                onPress={handleAcceptedRemoveItem}
+                onPress={() => handleAcceptedRemoveItem(type)}
               >
                 <Text
                   style={{ textAlign: "center", color: "white", fontSize: 16 }}

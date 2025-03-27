@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Checkbox from "expo-checkbox";
+import { formatDayOfWeek } from "../../../utilities";
 
 const style = StyleSheet.create({
   container: {
@@ -24,25 +25,34 @@ export default function GroupChooseTimeItem({
   const [isChecked, setIsChecked] = useState(false);
   return (
     <View style={style.container}>
-      <View style={{ width: "40%", alignItems: "center" }}>
+      <View style={{ width: "30%", alignItems: "center" }}>
         <Checkbox
           value={isChecked}
-          onValueChange={() =>
+          onValueChange={() => {
             setIsChecked((prev) => {
-              handleChooseDayRemove(timeItem, !prev);
               return !prev;
-            })
-          }
+            });
+            handleChooseDayRemove(timeItem, !isChecked, type);
+          }}
+          style={{ width: 30, height: 30 }}
         />
       </View>
       <View
-        style={{ width: "60%", alignItems: "center", justifyContent: "center" }}
+        style={{ width: "70%", alignItems: "center", justifyContent: "center" }}
       >
         {type == "DAY" && (
           <Text style={style.text}>{timeItem.toISOString().split("T")[0]}</Text>
         )}
         {type == "WEEKOFDAY" && (
-          <Text style={style.text}>{timeItem.toString().split(" ")[0]}</Text>
+          <Text style={style.text}>
+            {formatDayOfWeek(timeItem.toString().split(" ")[0])}
+          </Text>
+        )}
+        {type == "DAYOFWEEK" && (
+          <Text style={style.text}>
+            {formatDayOfWeek(timeItem.toString().split(" ")[0])} -
+            {timeItem.toISOString().split("T")[0]}
+          </Text>
         )}
       </View>
     </View>

@@ -96,7 +96,7 @@ export default function ModalTime({
                   alignItems: "center",
                   justifyContent: "center",
                 }}
-                onPress={handleAcceptedRemoveDay}
+                onPress={() => handleAcceptedRemoveDay(type)}
               >
                 <Text
                   style={{ textAlign: "center", color: "white", fontSize: 16 }}
