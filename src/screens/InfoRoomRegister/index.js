@@ -20,6 +20,7 @@ import {
   getAllDayBetweenDayStartAndDayEnd,
   renderTime,
   uploadImageToCloudinary,
+  findTimeFitToRegisterRoom,
 } from "../../utilities";
 import {
   CalendarCustom,
@@ -90,7 +91,7 @@ export default function InfoRoomRegister({ navigation, route }) {
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
   const [titleMeeting, setTitleMeeting] = useState("");
-  const [timeStart, setTimeStart] = useState("07:00");
+  const [timeStart, setTimeStart] = useState(() => findTimeFitToRegisterRoom());
   const [timeEnd, setTimeEnd] = useState("07:30");
   const [note, setNote] = useState("");
   const [description, setDescription] = useState("");
@@ -122,10 +123,13 @@ export default function InfoRoomRegister({ navigation, route }) {
   const [isOpenModalDrink, setIsOpenModalDrink] = useState(false);
   const [isOpenModalSelectedParticipant, setIsOpenModalSelectedParticipant] =
     useState(false);
+  const [isOpenModalRemoveDayOfWeek, setIsOpenModalRemoveDayOfWeek] =
+    useState(false);
 
   // state remove day or weekOfDay
-  const [daySelectedRemove, setDaySelectedRemove] = useState([]);
-  const [weekOfDaySelectRemove, setWeekOfDaySelectedRemove] = useState([]);
+  const [daySelectedRemove, setDaySelectedRemove] = useState([]); // tần suất mỗi ngày (ngày bị loại bỏ)
+  const [weekOfDaySelectRemove, setWeekOfDaySelectedRemove] = useState([]); // tần suất mỗi ngày (thứ bị loại bỏ)
+  const [dayOfWeekSelectRemove, setDayOfWeekSelectRemove] = useState([]); // tần suất mỗi tuần
 
   // state remove drink or participant
   const [drinkSelectedRemove, setDrinkSelectedRemove] = useState([]);
@@ -143,6 +147,25 @@ export default function InfoRoomRegister({ navigation, route }) {
     status: "",
     typePopup: "small",
   });
+
+  // kiểm tra xem đã quá giờ hay chưa
+  useEffect(() => {
+    const timeOut = setTimeout(() => {
+      if (timeStart == "18:00" || timeStart == "0") {
+        Alert.alert(
+          "Thông báo",
+          "Đã hết giờ để đặt phòng, vui lòng trở lại vào ngày hôm sau",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(""),
+            },
+          ]
+        );
+      }
+    }, 0);
+    return () => clearTimeout(timeOut);
+  }, []);
 
   const fetchServiceData = async () => {
     try {
@@ -334,20 +357,34 @@ export default function InfoRoomRegister({ navigation, route }) {
     }
   };
 
-  // xử lý remove day
-  const handleRemoveDay = (item, flag) => {
-    if (flag) setDaySelectedRemove((prev) => [...prev, item]);
-    else
-      setDaySelectedRemove((prev) => prev.filter((dayItem) => dayItem == item));
-  };
-
-  // xử lý remove week of day
-  const handleRemoveWeekOfDay = (item, flag) => {
-    if (flag) setWeekOfDaySelectedRemove((prev) => [...prev, item]);
-    else
-      setWeekOfDaySelectedRemove((prev) =>
-        prev.filter((weekOfDayItem) => weekOfDayItem == item)
-      );
+  // xử lý remove day or day of week or week of the day
+  const handleRemoveItemTime = (item, flag, type) => {
+    switch (type) {
+      case "DAY": {
+        // loại bỏ ngày theo tần suất mỗi ngày
+        if (flag) setDaySelectedRemove((prev) => [...prev, item]);
+        else
+          setDaySelectedRemove((prev) =>
+            prev.filter((dayItem) => dayItem == item)
+          );
+      }
+      case "WEEKOFDAY": {
+        // loại bỏ thứ trong tuần theo tần suất mỗi ngày
+        if (flag) setWeekOfDaySelectedRemove((prev) => [...prev, item]);
+        else
+          setWeekOfDaySelectedRemove((prev) =>
+            prev.filter((weekOfDayItem) => weekOfDayItem == item)
+          );
+      }
+      case "DAYOFWEEK": {
+        // loại bỏ thứ theo tuần dựa trên tần suất mỗi tuần
+        if (flag) setDayOfWeekSelectRemove((prev) => [...prev, item]);
+        else
+          setDayOfWeekSelectRemove((prev) =>
+            prev.filter((weekOfDayItem) => weekOfDayItem == item)
+          );
+      }
+    }
   };
 
   // xử lý modal chọn ngày bắt đầu
@@ -360,47 +397,93 @@ export default function InfoRoomRegister({ navigation, route }) {
   const handleDayOnModalDayEnd = (selectedDate) => {
     setDayEnd(selectedDate);
     setIsOpenModalDayEnd(false);
-    setTimeFinishFrequency([
-      ...getAllDayBetweenDayStartAndDayEnd(dayStart, selectedDate),
-    ]);
+    if (formatFrequency(frequency) == "DAILY") {
+      setTimeFinishFrequency([
+        ...getAllDayBetweenDayStartAndDayEnd(dayStart, selectedDate),
+      ]);
+    } else if (formatFrequency(frequency) == "WEEKLY") {
+      const dayOfWeekByStartDate = new Date(dayStart).toString().split(" ")[0];
+      const timeFinishFrequencyTemp = getAllDayBetweenDayStartAndDayEnd(
+        dayStart,
+        selectedDate
+      ).filter(
+        (timeItem) =>
+          new Date(timeItem).toString().split(" ")[0] == dayOfWeekByStartDate
+      );
+      setTimeFinishFrequency([...timeFinishFrequencyTemp]);
+    }
   };
 
-  // xử lý xác nhận remove ngày bị loại bỏ
-  const handleAcceptedRemoveDay = () => {
-    setTimeFinishFrequency((prev) =>
-      prev.filter((item) => !daySelectedRemove.includes(item))
+  // xử lý xác nhận remove item
+  const handleAcceptedRemoveItemCustom = (
+    updateOriginalState,
+    updateSelectedState,
+    updateStatusModal,
+    updateActiveButton = undefined,
+    arrItemBeRemove
+  ) => {
+    updateOriginalState((prev) =>
+      prev.filter((item) => !arrItemBeRemove.includes(item))
     );
-    setDaySelectedRemove([]);
-    setIsOpenModalRemoveDay(false);
-    setIsActiveRemoveWeekOfDay(true);
+    updateSelectedState([]);
+    updateStatusModal(false);
+    updateActiveButton != undefined && updateActiveButton(true);
   };
 
-  // xử lý xác nhận remove ngày bị loại bỏ
-  const handleAcceptedRemoveWeekOfDay = () => {
-    setTimeFinishFrequency((prev) =>
-      prev.filter((item) => !weekOfDaySelectRemove.includes(item))
-    );
-    setWeekOfDaySelectedRemove([]);
-    setIsOpenModalRemoveWeekOfDay(false);
-    setIsActiveRemoveDay(true);
-  };
-
-  // xử lý xác nhận remove ngày bị loại bỏ
-  const handleAcceptedRemoveDrink = () => {
-    setListSelectedServiceRender((prev) =>
-      prev.filter((item) => !drinkSelectedRemove.includes(item))
-    );
-    setDrinkSelectedRemove([]);
-    setIsOpenModalDrink(false);
-  };
-
-  // xử lý xác nhận remove ngày bị loại bỏ
-  const handleAcceptedRemoveParticipant = () => {
-    setListSelectedParticipantRender((prev) =>
-      prev.filter((item) => !participantSelectRemove.includes(item))
-    );
-    setParticipantSelectedRemove([]);
-    setIsOpenModalSelectedParticipant(false);
+  // xử lý xác nhận remove item for time, service, participant
+  const handleAcceptedRemoveItem = (type) => {
+    switch (type) {
+      case "DAY": {
+        handleAcceptedRemoveItemCustom(
+          setTimeFinishFrequency,
+          setDaySelectedRemove,
+          setIsOpenModalRemoveDay,
+          setIsActiveRemoveWeekOfDay,
+          daySelectedRemove
+        );
+        break;
+      }
+      case "WEEKOFDAY": {
+        handleAcceptedRemoveItemCustom(
+          setTimeFinishFrequency,
+          setWeekOfDaySelectedRemove,
+          setIsOpenModalRemoveWeekOfDay,
+          setIsActiveRemoveDay,
+          weekOfDaySelectRemove
+        );
+        break;
+      }
+      case "DAYOFWEEK": {
+        handleAcceptedRemoveItemCustom(
+          setTimeFinishFrequency,
+          setDayOfWeekSelectRemove,
+          setIsOpenModalRemoveDayOfWeek,
+          undefined, // truyền undefine bởi vì không có hành động active button
+          dayOfWeekSelectRemove
+        );
+        break;
+      }
+      case "DRINK": {
+        handleAcceptedRemoveItemCustom(
+          setListSelectedServiceRender,
+          setDrinkSelectedRemove,
+          setIsOpenModalDrink,
+          undefined, // truyền undefine bởi vì không có hành động active button
+          drinkSelectedRemove
+        );
+        break;
+      }
+      case "PARTICIPANT": {
+        handleAcceptedRemoveItemCustom(
+          setListSelectedParticipantRender,
+          setParticipantSelectedRemove,
+          setIsOpenModalSelectedParticipant,
+          undefined, // truyền undefine bởi vì không có hành động active button
+          participantSelectRemove
+        );
+        break;
+      }
+    }
   };
 
   // xử lý remove drink
@@ -417,6 +500,11 @@ export default function InfoRoomRegister({ navigation, route }) {
     if (flag) {
       if (item.empId != booker.employeeId)
         setParticipantSelectedRemove((prev) => [...prev, item]);
+      else
+        Alert.alert(
+          "Thông báo",
+          "Đây là người đặt phòng nên không thể xóa!!!. Vui lòng bỏ chọn"
+        );
     } else {
       setParticipantSelectedRemove((prev) =>
         prev.filter((participantItem) => participantItem == item)
@@ -428,6 +516,7 @@ export default function InfoRoomRegister({ navigation, route }) {
     <DefaultLayout>
       <Header
         leftIcon={"chevron-left"}
+        nameScreen={"inforoomregister"}
         handleOnPressLeftIcon={() => navigation.goBack("")}
       />
       <ScrollView
@@ -551,7 +640,12 @@ export default function InfoRoomRegister({ navigation, route }) {
           <DropdownCustom
             data={frequencyData}
             value={frequency}
-            handleOnChange={(item) => setFrequency(item.frequency)}
+            handleOnChange={(item) => {
+              setFrequency(item.frequency);
+              setTimeFinishFrequency((prev) => []);
+              setIsActiveRemoveDay(false);
+              setIsActiveRemoveWeekOfDay(false);
+            }}
             labelOfValue={"frequency"}
             nameIcon="punch-clock"
           />
@@ -593,70 +687,109 @@ export default function InfoRoomRegister({ navigation, route }) {
             </TouchableOpacity>
           </View>
         </View>
-        {frequency != "MỘT LẦN" && dayEnd && (
-          <View
-            style={[
-              style.contentItem,
-              {
-                flexDirection: "row",
-                backgroundColor: "white",
-                height: 50,
-                alignItems: "center",
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={{
-                width: 150,
-                height: 40,
-                borderRadius: 8,
-                borderColor: "#e7e7e7",
-                borderWidth: 1,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor:
-                  isActiveRemoveDay == false ? "#003b95" : "gray",
-              }}
-              onPress={() => setIsOpenModalRemoveDay(true)}
-              disabled={isActiveRemoveDay}
+        {formatFrequency(frequency) == "DAILY" &&
+          timeFinishFrequency.length > 0 && (
+            <View
+              style={[
+                style.contentItem,
+                {
+                  flexDirection: "row",
+                  backgroundColor: "white",
+                  height: 50,
+                  alignItems: "center",
+                },
+              ]}
             >
-              <Text
+              <TouchableOpacity
                 style={{
-                  fontSize: 15,
-                  textAlign: "center",
-                  color: "white",
+                  width: 150,
+                  height: 40,
+                  borderRadius: 8,
+                  borderColor: "#e7e7e7",
+                  borderWidth: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    isActiveRemoveDay == false ? "#003b95" : "gray",
                 }}
+                onPress={() => setIsOpenModalRemoveDay(true)}
+                disabled={isActiveRemoveDay}
               >
-                Loại bỏ ngày
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                width: 150,
-                height: 40,
-                borderRadius: 8,
-                borderColor: "#e7e7e7",
-                borderWidth: 1,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor:
-                  isActiveRemoveWeekOfDay == false ? "#003b95" : "gray",
-              }}
-              disabled={isActiveRemoveWeekOfDay}
-              onPress={() => setIsOpenModalRemoveWeekOfDay(true)}
+                <Text
+                  style={{
+                    fontSize: 15,
+                    textAlign: "center",
+                    color: "white",
+                  }}
+                >
+                  Loại bỏ ngày
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  width: 150,
+                  height: 40,
+                  borderRadius: 8,
+                  borderColor: "#e7e7e7",
+                  borderWidth: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    isActiveRemoveWeekOfDay == false ? "#003b95" : "gray",
+                }}
+                disabled={isActiveRemoveWeekOfDay}
+                onPress={() => setIsOpenModalRemoveWeekOfDay(true)}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    textAlign: "center",
+                    color: "white",
+                  }}
+                >
+                  Loại bỏ thứ
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        {formatFrequency(frequency) == "WEEKLY" &&
+          timeFinishFrequency.length > 0 && (
+            <View
+              style={[
+                style.contentItem,
+                {
+                  flexDirection: "row",
+                  backgroundColor: "white",
+                  height: 50,
+                  alignItems: "center",
+                },
+              ]}
             >
-              <Text
+              <TouchableOpacity
                 style={{
-                  fontSize: 15,
-                  textAlign: "center",
-                  color: "white",
+                  width: 150,
+                  height: 40,
+                  borderRadius: 8,
+                  borderColor: "#e7e7e7",
+                  borderWidth: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#003b95",
                 }}
+                onPress={() => setIsOpenModalRemoveDayOfWeek(true)}
               >
-                Loại bỏ thứ
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+                <Text
+                  style={{
+                    fontSize: 15,
+                    textAlign: "center",
+                    color: "white",
+                  }}
+                >
+                  Loại bỏ thứ
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         <View style={style.contentItem}>
           <Text style={style.labelInputContentItem}>Tài liệu</Text>
 
@@ -888,8 +1021,8 @@ export default function InfoRoomRegister({ navigation, route }) {
           setIsOpenModalRemoveDay(false);
           setDaySelectedRemove((prev) => []);
         }}
-        handleRemoveDay={handleRemoveDay}
-        handleAcceptedRemoveDay={handleAcceptedRemoveDay}
+        handleRemoveDay={handleRemoveItemTime}
+        handleAcceptedRemoveDay={handleAcceptedRemoveItem}
         type={"DAY"}
       />
       {/** Modal Choose Week Of Day Remove */}
@@ -900,9 +1033,22 @@ export default function InfoRoomRegister({ navigation, route }) {
           setIsOpenModalRemoveWeekOfDay(false);
           setWeekOfDaySelectedRemove((prev) => []);
         }}
-        handleRemoveDay={handleRemoveWeekOfDay}
-        handleAcceptedRemoveDay={handleAcceptedRemoveWeekOfDay}
+        handleRemoveDay={handleRemoveItemTime}
+        handleAcceptedRemoveDay={handleAcceptedRemoveItem}
         type={"WEEKOFDAY"}
+      />
+
+      {/** Modal Choose Week Of Day Remove */}
+      <ModalTime
+        timeFinishFrequency={timeFinishFrequency}
+        isOpenModal={isOpenModalRemoveDayOfWeek}
+        handleCloseModal={() => {
+          setIsOpenModalRemoveDayOfWeek(false);
+          setDayOfWeekSelectRemove((prev) => []);
+        }}
+        handleRemoveDay={handleRemoveItemTime}
+        handleAcceptedRemoveDay={handleAcceptedRemoveItem}
+        type={"DAYOFWEEK"}
       />
       {/** Modal loading and notification */}
       {isOpenModalNotification && (
@@ -1014,7 +1160,9 @@ export default function InfoRoomRegister({ navigation, route }) {
           setDrinkSelectedRemove([]);
         }}
         handleRemoveItem={handleRemoveDrink}
-        handleAcceptedRemoveItem={handleAcceptedRemoveDrink}
+        handleAcceptedRemoveItem={handleAcceptedRemoveItem}
+        title={"Xóa dịch vụ"}
+        type={"DRINK"}
       />
       {/** Modal tùy chỉnh dịch vụ */}
       <ModalServe
@@ -1025,7 +1173,9 @@ export default function InfoRoomRegister({ navigation, route }) {
           setParticipantSelectedRemove([]);
         }}
         handleRemoveItem={handleRemoveParticipant}
-        handleAcceptedRemoveItem={handleAcceptedRemoveParticipant}
+        handleAcceptedRemoveItem={handleAcceptedRemoveItem}
+        title={"Xóa người tham gia"}
+        type={"PARTICIPANT"}
       />
     </DefaultLayout>
   );
