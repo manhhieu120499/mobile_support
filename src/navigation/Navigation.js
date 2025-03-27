@@ -9,6 +9,8 @@ import {
   Approve,
   ScheduleUser,
   InfoRoomRegister,
+  QRScan,
+  ScheduleDetailRoom,
 } from "../screens";
 
 import Tabs from "./Tabs";
@@ -19,7 +21,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Tabs"
+        initialRouteName="ScheduleDetailRoom"
         screenOptions={{
           headerShown: false,
         }}
@@ -30,6 +32,11 @@ export default function Navigation() {
         <Stack.Screen name="ScheduleUser" component={ScheduleUser} />
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="InfoRoomRegister" component={InfoRoomRegister} />
+        <Stack.Screen name="QRScan" component={QRScan} />
+        <Stack.Screen
+          name="ScheduleDetailRoom"
+          component={ScheduleDetailRoom}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
