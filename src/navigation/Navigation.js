@@ -21,7 +21,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="ScheduleDetailRoom"
+        initialRouteName="QRScan"
         screenOptions={{
           headerShown: false,
         }}

@@ -5,6 +5,7 @@ import CalendarCustom from "./CalendarCustom";
 import ModalTime from "./ModalTime";
 import ModalCalendar from "./ModalCalendar";
 import ModalServe from "./ModalServe";
+import Popup from "./Popup";
 
 export {
   DropdownCustom,
@@ -14,4 +15,5 @@ export {
   ModalTime,
   ModalCalendar,
   ModalServe,
+  Popup,
 };
