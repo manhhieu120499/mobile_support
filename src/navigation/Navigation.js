@@ -21,7 +21,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="QRScan"
+        initialRouteName="Tabs"
         screenOptions={{
           headerShown: false,
         }}

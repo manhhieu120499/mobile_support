@@ -182,6 +182,7 @@ export default function CreateSchedule({ navigation, route }) {
   const handleTransferScreenRegisterRoom = ({ roomId, roomName }) => {
     navigation.navigate("InfoRoomRegister", {
       infoRoom: { roomId: roomId, roomName: roomName },
+      nameScreen: "CreateSchedule",
     });
   };
 
