@@ -87,11 +87,18 @@ const formatFrequency = (name) => {
 };
 
 export default function InfoRoomRegister({ navigation, route }) {
-  const { infoRoom } = route.params;
+  const { roomId, roomName } =
+    route?.params?.infoRoom != undefined
+      ? route.params.infoRoom
+      : { roomId: "", roomName: "" };
+  const { nameScreen = "CreateSchedule" } = route.params;
+  const [listRoom, setListRoom] = useState([]); // dùng cho trang đặt lịch theo ngày, mảng chứa object gôm ({"id": id, "roomName": roomName})
+  const [roomSelected, setRoomSelected] = useState(roomId);
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
   const [titleMeeting, setTitleMeeting] = useState("");
-  const [timeStart, setTimeStart] = useState(() => findTimeFitToRegisterRoom());
+  // const [timeStart, setTimeStart] = useState(() => findTimeFitToRegisterRoom());
+  const [timeStart, setTimeStart] = useState("07:00");
   const [timeEnd, setTimeEnd] = useState("07:30");
   const [note, setNote] = useState("");
   const [description, setDescription] = useState("");
@@ -211,10 +218,27 @@ export default function InfoRoomRegister({ navigation, route }) {
     }
   };
 
+  // lấy danh sách phòng
+  const fetchRoomData = async () => {
+    try {
+      const res = await axiosConfig().get(
+        "/api/v1/room/getRoomOverView?branch=TP. Hồ Chí Minh&dayStart=2025-03-20T00:00:00.000Z&dayEnd=2025-03-20T23:59:59.999Z"
+      );
+      const formatData = res.data.map((room) => ({
+        id: room.roomId,
+        roomName: room.roomName,
+      }));
+      setListRoom(formatData);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   // lấy danh sách dịch vụ
   useEffect(() => {
     fetchServiceData();
     fetchEmployeeData();
+    nameScreen != "CreateSchedule" && fetchRoomData();
   }, []);
 
   // xử lý cập nhật giờ kết thúc theo giờ bắt đầu
@@ -303,7 +327,7 @@ export default function InfoRoomRegister({ navigation, route }) {
               title: titleMeeting,
               frequency: formatFrequency(frequency),
               bookerId: booker.employeeId,
-              roomId: infoRoom.roomId,
+              roomId: roomSelected,
               employeeIds: listSelectedParticipantRender.map(
                 (item) => item.empId
               ),
@@ -525,17 +549,77 @@ export default function InfoRoomRegister({ navigation, route }) {
           paddingBottom: 200,
         }}
       >
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Chọn phòng</Text>
-          <View style={style.inputInContentItem}>
-            <TextInput
-              placeholder="Chọn phòng"
-              value={infoRoom.roomName}
-              style={style.inputContent}
-              editable={false}
-            />
+        <View
+          style={{
+            width: "100%",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Chọn phòng</Text>
+            {roomName && listRoom.length <= 0 && (
+              <View style={style.inputInContentItem}>
+                <TextInput
+                  placeholder="Chọn phòng"
+                  value={roomName}
+                  style={style.inputContent}
+                  editable={false}
+                />
+              </View>
+            )}
+            {listRoom.length > 0 && (
+              <DropdownCustom
+                data={listRoom}
+                value={""}
+                handleOnChange={(item) => {
+                  setRoomSelected(item.id);
+                }}
+                labelOfValue={"roomName"}
+                valueField={"id"}
+                nameIcon="meeting-room"
+                isVisibleSearch={false}
+                placeholder={"Chọn phòng"}
+              />
+            )}
+          </View>
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Ngày</Text>
+            <View
+              style={[
+                style.inputInContentItem,
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                },
+              ]}
+            >
+              <TextInput
+                placeholder="Nhập ngày"
+                value={dayStart}
+                style={style.inputContent}
+              />
+              <TouchableOpacity
+                style={{
+                  width: "15%",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+                onPress={() => setIsOpenModalDayStart(true)}
+              >
+                <FontAwesomeIcon
+                  name="calendar"
+                  size={20}
+                  style={{ textAlign: "right" }}
+                  color={"black"}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+
         <View style={style.contentItem}>
           <Text style={style.labelInputContentItem}>Tiêu đề</Text>
           <View style={style.inputInContentItem}>
@@ -547,71 +631,46 @@ export default function InfoRoomRegister({ navigation, route }) {
             />
           </View>
         </View>
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Ngày</Text>
-          <View
-            style={[
-              style.inputInContentItem,
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              },
-            ]}
-          >
-            <TextInput
-              placeholder="Nhập ngày"
-              value={dayStart}
-              style={style.inputContent}
-            />
-            <TouchableOpacity
-              style={{
-                width: "15%",
-                alignItems: "flex-end",
-                justifyContent: "center",
-                height: "100%",
+
+        <View
+          style={{
+            width: "100%",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Giờ bắt đầu</Text>
+
+            <DropdownCustom
+              data={renderTime()}
+              value={timeStart}
+              handleOnChange={(item) => {
+                setTimeStart(item.time);
+                setIsEditTimeEnd(false);
               }}
-              onPress={() => setIsOpenModalDayStart(true)}
-            >
-              <FontAwesomeIcon
-                name="calendar"
-                size={20}
-                style={{ textAlign: "right" }}
-                color={"black"}
-              />
-            </TouchableOpacity>
+              labelOfValue={"time"}
+              valueField={"time"}
+              nameIcon="punch-clock"
+            />
+          </View>
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Giờ kết thúc</Text>
+
+            <DropdownCustom
+              data={timeEndFilterByTimeStart}
+              value={timeEndFilterByTimeStart[0]}
+              handleOnChange={(item) => {
+                setTimeEnd(item.time);
+              }}
+              labelOfValue={"time"}
+              valueField={"time"}
+              nameIcon="punch-clock"
+              isDisable={isEditTimeEnd}
+            />
           </View>
         </View>
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Giờ bắt đầu</Text>
 
-          <DropdownCustom
-            data={renderTime()}
-            value={timeStart}
-            handleOnChange={(item) => {
-              setTimeStart(item.time);
-              setIsEditTimeEnd(false);
-            }}
-            labelOfValue={"time"}
-            valueField={"time"}
-            nameIcon="punch-clock"
-          />
-        </View>
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Giờ kết thúc</Text>
-
-          <DropdownCustom
-            data={timeEndFilterByTimeStart}
-            value={timeEndFilterByTimeStart[0]}
-            handleOnChange={(item) => {
-              setTimeEnd(item.time);
-            }}
-            labelOfValue={"time"}
-            valueField={"time"}
-            nameIcon="punch-clock"
-            isDisable={isEditTimeEnd}
-          />
-        </View>
         <View style={style.contentItem}>
           <Text style={style.labelInputContentItem}>Ghi chú</Text>
           <View style={style.inputInContentItem}>
@@ -630,63 +689,74 @@ export default function InfoRoomRegister({ navigation, route }) {
               placeholder="Nhập mô tả"
               value={description}
               style={style.inputContent}
+              multiline={true}
+              numberOfLines={3}
               onChangeText={(text) => setDescription(text)}
             />
           </View>
         </View>
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Tần suất</Text>
+        <View
+          style={{
+            width: "100%",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Tần suất</Text>
 
-          <DropdownCustom
-            data={frequencyData}
-            value={frequency}
-            handleOnChange={(item) => {
-              setFrequency(item.frequency);
-              setTimeFinishFrequency((prev) => []);
-              setIsActiveRemoveDay(false);
-              setIsActiveRemoveWeekOfDay(false);
-            }}
-            labelOfValue={"frequency"}
-            nameIcon="punch-clock"
-          />
-        </View>
-        <View style={style.contentItem}>
-          <Text style={style.labelInputContentItem}>Ngày kết thúc</Text>
-          <View
-            style={[
-              style.inputInContentItem,
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              },
-            ]}
-          >
-            <TextInput
-              placeholder="Nhập ngày"
-              value={dayEnd}
-              style={style.inputContent}
-              editable={frequency == "MỘT LẦN" ? false : true}
-            />
-            <TouchableOpacity
-              style={{
-                width: "15%",
-                alignItems: "flex-end",
-                justifyContent: "center",
-                height: "100%",
+            <DropdownCustom
+              data={frequencyData}
+              value={frequency}
+              handleOnChange={(item) => {
+                setFrequency(item.frequency);
+                setTimeFinishFrequency((prev) => []);
+                setIsActiveRemoveDay(false);
+                setIsActiveRemoveWeekOfDay(false);
               }}
-              onPress={() => setIsOpenModalDayEnd(true)}
-              disabled={frequency == "MỘT LẦN" ? true : false}
+              labelOfValue={"frequency"}
+              nameIcon="punch-clock"
+            />
+          </View>
+          <View style={[style.contentItem, { width: "48%" }]}>
+            <Text style={style.labelInputContentItem}>Ngày kết thúc</Text>
+            <View
+              style={[
+                style.inputInContentItem,
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                },
+              ]}
             >
-              <FontAwesomeIcon
-                name="calendar"
-                size={20}
-                style={{ textAlign: "right" }}
-                color={"black"}
+              <TextInput
+                placeholder="Nhập ngày"
+                value={dayEnd}
+                style={style.inputContent}
+                editable={frequency == "MỘT LẦN" ? false : true}
               />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  width: "15%",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+                onPress={() => setIsOpenModalDayEnd(true)}
+                disabled={frequency == "MỘT LẦN" ? true : false}
+              >
+                <FontAwesomeIcon
+                  name="calendar"
+                  size={20}
+                  style={{ textAlign: "right" }}
+                  color={"black"}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+
         {formatFrequency(frequency) == "DAILY" &&
           timeFinishFrequency.length > 0 && (
             <View

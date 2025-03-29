@@ -28,12 +28,16 @@ const styles = StyleSheet.create({
     width: 30,
     alignItems: "center",
     justifyContent: "center",
+    position: "absolute",
+    left: 20,
   },
   iconRightInContainerTitle: {
     height: 30,
     width: 30,
     alignItems: "center",
     justifyContent: "center",
+    position: "absolute",
+    right: 20,
   },
 
   content: {
