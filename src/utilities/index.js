@@ -115,9 +115,10 @@ const findTimeFitToRegisterRoom = () => {
           `${currentDate}T${timeNestedCurrent.time}:00`
         ).toLocaleTimeString()
       ) - transferTimeToMinutes(currentTime.toLocaleTimeString());
-    if (index < renderTime().length - 1) {
-      if (result > 30) return renderTime()[index].time;
-      else return renderTime()[index + 1].time;
+
+    if (index <= renderTime().length - 2) {
+      if (result >= 20) return renderTime()[index].time;
+      else if (result <= 10) return renderTime()[index + 1].time;
     } else {
       return "0";
     }
