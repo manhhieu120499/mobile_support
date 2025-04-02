@@ -138,14 +138,12 @@ export default function CreateSchedule({ navigation, route }) {
         )}&timeStart=${timeStartFormat}&timeEnd=${timeEndFormat}&branch=${branchValue}`
       );
 
-      setRoomsData(res.data);
+      setRoomsData((prev) => [...res.data]);
       setRoomsDataDefault(res.data);
     } catch (err) {
-      console.log(err.response);
+      console.log(err.response.message);
     }
   };
-
-  console.log(selectedDate);
 
   // call rooms data first time
   useEffect(() => {
@@ -251,6 +249,7 @@ export default function CreateSchedule({ navigation, route }) {
               flexDirection: "row",
               gap: 5,
             }}
+            onPress={() => navigation.navigate("Schedule")}
           >
             <MaterialIcons name="calendar-month" size={20} color={"white"} />
             <Text
