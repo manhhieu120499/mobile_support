@@ -57,6 +57,9 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
       case "scheduledeatilroom": {
         return 120;
       }
+      case "timeline": {
+        return 110;
+      }
       default: {
         return 150;
       }
@@ -67,6 +70,9 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
         return 100;
       }
       case "scheduledeatilroom": {
+        return 90;
+      }
+      case "timeline": {
         return 90;
       }
       default: {
