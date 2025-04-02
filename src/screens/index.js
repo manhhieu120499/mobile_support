@@ -7,6 +7,7 @@ import QRScan from "./QRScan";
 import ScheduleDetailRoom from "./ScheduleDetailRoom";
 import Schedule from "./Schedule";
 import TimeLine from "./TimeLine";
+import RoomDetail from "./RoomDetail";
 
 export {
   Profile,
@@ -18,4 +19,5 @@ export {
   ScheduleDetailRoom,
   Schedule,
   TimeLine,
+  RoomDetail,
 };

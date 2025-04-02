@@ -177,10 +177,9 @@ export default function CreateSchedule({ navigation, route }) {
   }, []);
 
   // xử lý chuyển đến trang đặt phòng
-  const handleTransferScreenRegisterRoom = ({ roomId, roomName }) => {
+  const handleTransferScreenRegisterRoom = ({ roomItem }) => {
     navigation.navigate("InfoRoomRegister", {
-      infoRoom: { roomId: roomId, roomName: roomName },
-      nameScreen: "CreateSchedule",
+      infoRoom: roomItem,
     });
   };
 
@@ -277,8 +276,11 @@ export default function CreateSchedule({ navigation, route }) {
                 <CardRoom
                   key={roomItem.roomId}
                   roomInfo={roomItem}
-                  handleRegisterRoom={({ roomId, roomName }) =>
-                    handleTransferScreenRegisterRoom({ roomId, roomName })
+                  handleRegisterRoom={() =>
+                    handleTransferScreenRegisterRoom({ roomItem })
+                  }
+                  handleViewDetailRoom={() =>
+                    navigation.navigate("RoomDetail", { room: roomItem })
                   }
                 />
               ))}
