@@ -11,6 +11,8 @@ import {
   InfoRoomRegister,
   QRScan,
   ScheduleDetailRoom,
+  Schedule,
+  TimeLine,
 } from "../screens";
 
 import Tabs from "./Tabs";
@@ -37,6 +39,8 @@ export default function Navigation() {
           name="ScheduleDetailRoom"
           component={ScheduleDetailRoom}
         />
+        <Stack.Screen name="Schedule" component={Schedule} />
+        <Stack.Screen name="TimeLine" component={TimeLine} />
       </Stack.Navigator>
     </NavigationContainer>
   );
