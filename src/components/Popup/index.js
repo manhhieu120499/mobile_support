@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   content: {
-    flex: 1.6,
+    flex: 2,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
@@ -81,7 +81,7 @@ export default function Popup({
                 {
                   color:
                     status == "error"
-                      ? "red"
+                      ? "#c31818"
                       : status == "warning"
                       ? "#ffa300"
                       : "green",
@@ -96,7 +96,12 @@ export default function Popup({
                 <Button
                   style={[
                     styles.button,
-                    { width: 140, alignSelf: "center", marginTop: 15 },
+                    {
+                      width: 140,
+                      alignSelf: "center",
+                      marginTop: 15,
+                      backgroundColor: "#c31818",
+                    },
                   ]}
                   onPress={handleViewDetailError}
                 >

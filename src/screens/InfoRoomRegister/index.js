@@ -28,6 +28,7 @@ import {
   ModalCalendar,
   ModalServe,
   ModalTime,
+  Popup,
 } from "../../components";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -87,18 +88,21 @@ const formatFrequency = (name) => {
 };
 
 export default function InfoRoomRegister({ navigation, route }) {
-  const { roomId, roomName } =
-    route?.params?.infoRoom != undefined
-      ? route.params.infoRoom
-      : { roomId: "", roomName: "" };
-  const { nameScreen = "CreateSchedule" } = route.params;
-  const [listRoom, setListRoom] = useState([]); // dùng cho trang đặt lịch theo ngày, mảng chứa object gôm ({"id": id, "roomName": roomName})
+  const {
+    roomId,
+    roomName,
+    timeStartBeChoose = "",
+    capacity = 0,
+  } = route?.params?.infoRoom != undefined
+    ? route.params.infoRoom
+    : { roomId: "", roomName: "", timeStartBeChoose: "" };
   const [roomSelected, setRoomSelected] = useState(roomId);
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
   const [titleMeeting, setTitleMeeting] = useState("");
-  // const [timeStart, setTimeStart] = useState(() => findTimeFitToRegisterRoom());
-  const [timeStart, setTimeStart] = useState("07:00");
+  const [timeStart, setTimeStart] = useState(() =>
+    timeStartBeChoose != "" ? timeStartBeChoose : findTimeFitToRegisterRoom()
+  );
   const [timeEnd, setTimeEnd] = useState("07:30");
   const [note, setNote] = useState("");
   const [description, setDescription] = useState("");
@@ -115,9 +119,13 @@ export default function InfoRoomRegister({ navigation, route }) {
     renderTime()
   );
   const [dayStart, setDayStart] = useState(
-    new Date().toISOString().split("T")[0]
+    route?.params?.infoRoom?.dateSelected ??
+      new Date().toISOString().split("T")[0]
   );
-  const [dayEnd, setDayEnd] = useState(new Date().toISOString().split("T")[0]);
+  const [dayEnd, setDayEnd] = useState(
+    route?.params?.infoRoom?.dateSelected ??
+      new Date().toISOString().split("T")[0]
+  );
   const [timeFinishFrequency, setTimeFinishFrequency] = useState([]);
 
   // state đóng mở modal
@@ -132,6 +140,12 @@ export default function InfoRoomRegister({ navigation, route }) {
     useState(false);
   const [isOpenModalRemoveDayOfWeek, setIsOpenModalRemoveDayOfWeek] =
     useState(false);
+  const [
+    isOpenModalDetailDuplicatedSchedule,
+    setIsOpenModalDetailDuplicatedSchedule,
+  ] = useState(false);
+
+  console.log(timeStart);
 
   // state remove day or weekOfDay
   const [daySelectedRemove, setDaySelectedRemove] = useState([]); // tần suất mỗi ngày (ngày bị loại bỏ)
@@ -152,8 +166,11 @@ export default function InfoRoomRegister({ navigation, route }) {
   const [message, setMessage] = useState({
     body: "",
     status: "",
-    typePopup: "small",
+    reason: "",
   });
+
+  // state duplicated schedule
+  const [listDuplicatedSchedule, setListDuplicatedSchedule] = useState([]);
 
   // kiểm tra xem đã quá giờ hay chưa
   useEffect(() => {
@@ -218,27 +235,10 @@ export default function InfoRoomRegister({ navigation, route }) {
     }
   };
 
-  // lấy danh sách phòng
-  const fetchRoomData = async () => {
-    try {
-      const res = await axiosConfig().get(
-        "/api/v1/room/getRoomOverView?branch=TP. Hồ Chí Minh&dayStart=2025-03-20T00:00:00.000Z&dayEnd=2025-03-20T23:59:59.999Z"
-      );
-      const formatData = res.data.map((room) => ({
-        id: room.roomId,
-        roomName: room.roomName,
-      }));
-      setListRoom(formatData);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   // lấy danh sách dịch vụ
   useEffect(() => {
     fetchServiceData();
     fetchEmployeeData();
-    nameScreen != "CreateSchedule" && fetchRoomData();
   }, []);
 
   // xử lý cập nhật giờ kết thúc theo giờ bắt đầu
@@ -253,6 +253,7 @@ export default function InfoRoomRegister({ navigation, route }) {
     setTimeEndFilterByTimeStart((prev) => [
       ...handleUpdateTimeEndByTimeStart(timeStart),
     ]);
+    setTimeEnd(handleUpdateTimeEndByTimeStart(timeStart)[0].time); // cập nhật time end trong lần đầu tiên khởi tạo
   }, [timeStart]);
 
   // xử lý chọn ảnh từ thư viện
@@ -294,85 +295,100 @@ export default function InfoRoomRegister({ navigation, route }) {
       setIsOpenModalNotification(true);
       try {
         // upload ảnh lên cloudinary
-        const resImages = [1];
+        const resImages = [];
         for (const file of listDocument) {
-          const { data, status, message } = await uploadImageToCloudinary(
-            file.file
-          );
-          if (status == "success") resImages.push(data);
-          else {
+          try {
+            const { data, status, message } = await uploadImageToCloudinary(
+              file.file
+            );
+            if (status === "success") {
+              resImages.push(data);
+            } else {
+              throw new Error(message || "Lỗi không xác định khi tải ảnh");
+            }
+          } catch (err) {
+            console.log("Lỗi upload ảnh:", err);
             setMessage({
               body: "Thông báo \nGửi yêu cầu thất bại. Vui lòng kiểm tra lại kết nối mạng",
               status: "err",
               typePopup: "small",
             });
-            console.log(message);
           }
         }
 
-        if (resImages.length > 0) {
-          // gửi request đặt phòng
-          const requestData = {
-            timeRequest: new Date().toISOString(),
-            typeRequestForm:
-              formatFrequency(frequency) == "ONE_TIME"
-                ? "RESERVATION_ONETIME"
-                : "RESERVATION_RECURRING",
-            reservationDTO: {
-              time: formatTime(new Date().toISOString().split("T")[0], "00:00"),
-              timeStart: formatTime(dayStart, timeStart),
-              timeEnd: formatTime(dayStart, timeEnd),
-              note: note,
-              description: description,
-              title: titleMeeting,
-              frequency: formatFrequency(frequency),
-              bookerId: booker.employeeId,
-              roomId: roomSelected,
-              employeeIds: listSelectedParticipantRender.map(
-                (item) => item.empId
-              ),
-              serviceIds: listSelectedServiceRender.map((item) => item.id),
-              filePaths: [...resImages],
-              timeFinishFrequency: [...timeFinishFrequency],
-            },
-          };
+        // gửi request đặt phòng
+        const requestData = {
+          timeRequest: new Date().toISOString(),
+          typeRequestForm:
+            formatFrequency(frequency) == "ONE_TIME"
+              ? "RESERVATION_ONETIME"
+              : "RESERVATION_RECURRING",
+          reservationDTO: {
+            time: formatTime(new Date().toISOString().split("T")[0], "00:00"),
+            timeStart: formatTime(dayStart, timeStart),
+            timeEnd: formatTime(dayStart, timeEnd),
+            note,
+            description,
+            title: titleMeeting,
+            frequency: formatFrequency(frequency),
+            bookerId: booker.employeeId,
+            roomId: roomSelected,
+            employeeIds: listSelectedParticipantRender.map(
+              (item) => item.empId
+            ),
+            serviceIds: listSelectedServiceRender.map((item) => item.id),
+            filePaths: [...resImages],
+            timeFinishFrequency: [...timeFinishFrequency],
+          },
+        };
 
-          const res = await axiosConfig().post(
-            "/api/v1/requestForm/createRequestForm",
-            requestData
-          );
-          if (res.status == 200) {
-            setMessage({
-              body: "Gửi phê duyệt thành công",
-              status: "success",
-              typePopup: "small",
-            });
-          }
+        const res = await axiosConfig().post(
+          "/api/v1/requestForm/createRequestForm",
+          requestData
+        );
+        if (res.status === 200) {
+          setMessage({
+            body: "Gửi phê duyệt thành công",
+            status: "success",
+            reason: "",
+          });
         }
       } catch (err) {
         setLoading(false);
-        if (err.status == 400) {
+        if (err.response && err.response.status === 400) {
+          console.log(err.response.data);
           const arrMessage = err.response.data
             .map((item) => {
               const infoDuplicate = {
                 title: item.title,
-                start: item.timeStart.toString().split("T")[0],
-                end: item.timeEnd.toString().split("T")[0],
+                dateDuplicated: item.timeStart.toString().split("T")[0],
+                start: item.timeStart.toString().split("T")[1].slice(0, 5),
+                end: item.timeEnd.toString().split("T")[1].slice(0, 5),
               };
-              return `${infoDuplicate.title}- thời gian: ${infoDuplicate.start} ${infoDuplicate.end}`;
+              return `${infoDuplicate.title} - thời gian: ${infoDuplicate.start} - ${infoDuplicate.end}`;
             })
-            .slice(0, 3)
+            .slice(0, 2)
             .join("\n");
+          setListDuplicatedSchedule(
+            err.response.data.map((item) => {
+              return {
+                dateDuplicated: item.timeStart.toString().split("T")[0],
+                timeStart: item.timeStart.toString().split("T")[1].slice(0, 5),
+                timeEnd: item.timeEnd.toString().split("T")[1].slice(0, 5),
+              };
+            })
+          );
           setMessage({
-            body: `Trùng lịch.\n${arrMessage}`,
-            status: "err",
-            typePopup: "big",
+            body: `Trùng lịch\n${arrMessage}`,
+            status: "error",
+            reason: "duplicated",
           });
         } else {
+          console.log(err);
           setMessage({
             body: "Gửi phê duyệt thất bại.\nVui lòng kiểm tra lại thông tin hoặc đường truyền mạng",
-            status: "err",
-            typePopup: "small",
+            status: "error",
+            reason: "",
           });
         }
       } finally {
@@ -414,6 +430,12 @@ export default function InfoRoomRegister({ navigation, route }) {
   // xử lý modal chọn ngày bắt đầu
   const handleDayOnModalDayStart = (selectedDate) => {
     setDayStart(selectedDate);
+    if (formatFrequency(frequency) == "ONE_TIME") setDayEnd(selectedDate);
+    if (selectedDate != new Date().toISOString().split("T")[0])
+      setTimeStart("07:00");
+    else {
+      setTimeStart(findTimeFitToRegisterRoom());
+    }
     setIsOpenModalDayStart(false);
   };
 
@@ -536,6 +558,8 @@ export default function InfoRoomRegister({ navigation, route }) {
     }
   };
 
+  console.log(listSelectedParticipantRender);
+
   return (
     <DefaultLayout>
       <Header
@@ -558,30 +582,14 @@ export default function InfoRoomRegister({ navigation, route }) {
         >
           <View style={[style.contentItem, { width: "48%" }]}>
             <Text style={style.labelInputContentItem}>Chọn phòng</Text>
-            {roomName && listRoom.length <= 0 && (
-              <View style={style.inputInContentItem}>
-                <TextInput
-                  placeholder="Chọn phòng"
-                  value={roomName}
-                  style={style.inputContent}
-                  editable={false}
-                />
-              </View>
-            )}
-            {listRoom.length > 0 && (
-              <DropdownCustom
-                data={listRoom}
-                value={""}
-                handleOnChange={(item) => {
-                  setRoomSelected(item.id);
-                }}
-                labelOfValue={"roomName"}
-                valueField={"id"}
-                nameIcon="meeting-room"
-                isVisibleSearch={false}
-                placeholder={"Chọn phòng"}
+            <View style={style.inputInContentItem}>
+              <TextInput
+                placeholder="Chọn phòng"
+                value={roomName}
+                style={style.inputContent}
+                editable={false}
               />
-            )}
+            </View>
           </View>
           <View style={[style.contentItem, { width: "48%" }]}>
             <Text style={style.labelInputContentItem}>Ngày</Text>
@@ -599,6 +607,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                 placeholder="Nhập ngày"
                 value={dayStart}
                 style={style.inputContent}
+                editable={false}
               />
               <TouchableOpacity
                 style={{
@@ -608,6 +617,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                   height: "100%",
                 }}
                 onPress={() => setIsOpenModalDayStart(true)}
+                disabled={route?.params?.infoRoom?.dateSelected ? true : false}
               >
                 <FontAwesomeIcon
                   name="calendar"
@@ -643,7 +653,7 @@ export default function InfoRoomRegister({ navigation, route }) {
             <Text style={style.labelInputContentItem}>Giờ bắt đầu</Text>
 
             <DropdownCustom
-              data={renderTime()}
+              data={renderTime().slice(0, renderTime().length - 1)}
               value={timeStart}
               handleOnChange={(item) => {
                 setTimeStart(item.time);
@@ -652,6 +662,10 @@ export default function InfoRoomRegister({ navigation, route }) {
               labelOfValue={"time"}
               valueField={"time"}
               nameIcon="punch-clock"
+              isDisable={
+                dayStart == new Date().toISOString().split("T")[0] ||
+                timeStartBeChoose != ""
+              }
             />
           </View>
           <View style={[style.contentItem, { width: "48%" }]}>
@@ -666,7 +680,7 @@ export default function InfoRoomRegister({ navigation, route }) {
               labelOfValue={"time"}
               valueField={"time"}
               nameIcon="punch-clock"
-              isDisable={isEditTimeEnd}
+              isDisable={timeStartBeChoose != "" ? false : isEditTimeEnd}
             />
           </View>
         </View>
@@ -734,7 +748,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                 placeholder="Nhập ngày"
                 value={dayEnd}
                 style={style.inputContent}
-                editable={frequency == "MỘT LẦN" ? false : true}
+                editable={false}
               />
               <TouchableOpacity
                 style={{
@@ -981,11 +995,18 @@ export default function InfoRoomRegister({ navigation, route }) {
               data={listParticipant}
               value={""}
               handleOnChange={(item) => {
-                const { empId, name } = item;
-                setListSelectedParticipantRender((prev) => [
-                  ...prev,
-                  { empId, name },
-                ]);
+                if (listSelectedParticipantRender.length <= capacity - 1) {
+                  const { empId, name } = item;
+                  setListSelectedParticipantRender((prev) => [
+                    ...prev,
+                    { empId, name },
+                  ]);
+                } else {
+                  Alert.alert(
+                    "Thông báo",
+                    "Số lượng người tham gia phải nhỏ hơn hoặc bằng sức chứa của phòng"
+                  );
+                }
               }}
               labelOfValue={"name"}
               valueField={"empId"}
@@ -1154,69 +1175,22 @@ export default function InfoRoomRegister({ navigation, route }) {
                 <ActivityIndicator size={40} />
               </View>
             ) : (
-              <View
-                style={{
-                  width: "85%",
-                  minHeight: message.typePopup == "small" ? 200 : 300,
-                  maxHeight: 500,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "white",
-                  alignSelf: "center",
-                  borderRadius: 10,
-                  top: "35%",
+              <Popup
+                isOpen={isOpenModalNotification}
+                title={"Thông báo"}
+                status={message.status}
+                content={message.body}
+                titleButtonAccept={"OK"}
+                size={message.reason == "duplicated" ? "large" : "default"}
+                handleOnPopup={() => {
+                  setIsOpenModalNotification(false);
+                  if (message.status == "success")
+                    navigation.navigate("CreateSchedule");
                 }}
-              >
-                <Text
-                  style={{
-                    fontSize: 25,
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  Thông báo
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: "normal",
-                    marginBottom: 12,
-                    textAlign: "center",
-                  }}
-                >
-                  {message.body}
-                </Text>
-                <Pressable
-                  style={{
-                    width: 55,
-                    height: 35,
-                    alignSelf: "flex-end",
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    backgroundColor: "#00c4dc",
-                    borderRadius: 10,
-                    marginRight: 10,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  onPress={() => {
-                    setIsOpenModalNotification(false);
-                    if (message.status == "success")
-                      navigation.navigate("CreateSchedule");
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: "white",
-                      textAlign: "center",
-                    }}
-                  >
-                    OK
-                  </Text>
-                </Pressable>
-              </View>
+                handleViewDetailError={() => {
+                  setIsOpenModalDetailDuplicatedSchedule(true);
+                }}
+              />
             )}
           </View>
         </Modal>
@@ -1247,6 +1221,112 @@ export default function InfoRoomRegister({ navigation, route }) {
         title={"Xóa người tham gia"}
         type={"PARTICIPANT"}
       />
+      {/** Modal xem chi tiết trùng lịch */}
+      <Modal
+        transparent={true}
+        visible={isOpenModalDetailDuplicatedSchedule}
+        animationType="fade"
+      >
+        <View
+          style={{
+            position: "absolute",
+            top: 5,
+            right: 0,
+            left: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{
+              width: "90%",
+              top: "30%",
+              height: 300,
+              backgroundColor: "white",
+              alignSelf: "center",
+              borderRadius: 15,
+            }}
+          >
+            <Pressable
+              style={{
+                height: 40,
+                width: 40,
+                alignItems: "center",
+                justifyContent: "center",
+                alignSelf: "flex-end",
+              }}
+              onPress={() => setIsOpenModalDetailDuplicatedSchedule(false)}
+            >
+              <MaterialIcons name="close" size={20} />
+            </Pressable>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  width: "40%",
+                  textAlign: "center",
+                }}
+              >
+                Ngày
+              </Text>
+              <Text>|</Text>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  width: "60%",
+                  textAlign: "center",
+                }}
+              >
+                Thời gian
+              </Text>
+            </View>
+            <FlatList
+              data={listDuplicatedSchedule}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    width: "100%",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginVertical: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: "300",
+                      width: "40%",
+                      textAlign: "center",
+                    }}
+                  >
+                    {item.dateDuplicated}
+                  </Text>
+                  <Text>|</Text>
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: "300",
+                      width: "60%",
+                      textAlign: "center",
+                    }}
+                  >
+                    Từ {item.timeStart} đến {item.timeEnd}
+                  </Text>
+                </View>
+              )}
+              keyExtractor={(item) => Math.random(7)}
+            />
+          </View>
+        </View>
+      </Modal>
     </DefaultLayout>
   );
 }

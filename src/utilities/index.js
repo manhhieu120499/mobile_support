@@ -115,14 +115,15 @@ const findTimeFitToRegisterRoom = () => {
           `${currentDate}T${timeNestedCurrent.time}:00`
         ).toLocaleTimeString()
       ) - transferTimeToMinutes(currentTime.toLocaleTimeString());
-    if (index < renderTime().length - 1) {
-      if (result > 30) return renderTime()[index].time;
+    console.log(index);
+    console.log(result);
+    if (index <= renderTime().length - 2) {
+      if (result >= 15) return renderTime()[index].time;
       else return renderTime()[index + 1].time;
     } else {
-      return "0";
+      return "0"; // 0 đại diện cho việc quá giờ đặt phòng
     }
   }
-  return "0"; // 0 đại diện cho việc quá giờ đặt phòng
 };
 
 export {

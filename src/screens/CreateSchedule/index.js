@@ -138,14 +138,12 @@ export default function CreateSchedule({ navigation, route }) {
         )}&timeStart=${timeStartFormat}&timeEnd=${timeEndFormat}&branch=${branchValue}`
       );
 
-      setRoomsData(res.data);
+      setRoomsData((prev) => [...res.data]);
       setRoomsDataDefault(res.data);
     } catch (err) {
-      console.log(err.response);
+      console.log(err.response.message);
     }
   };
-
-  console.log(selectedDate);
 
   // call rooms data first time
   useEffect(() => {
@@ -179,10 +177,9 @@ export default function CreateSchedule({ navigation, route }) {
   }, []);
 
   // xử lý chuyển đến trang đặt phòng
-  const handleTransferScreenRegisterRoom = ({ roomId, roomName }) => {
+  const handleTransferScreenRegisterRoom = ({ roomItem }) => {
     navigation.navigate("InfoRoomRegister", {
-      infoRoom: { roomId: roomId, roomName: roomName },
-      nameScreen: "CreateSchedule",
+      infoRoom: roomItem,
     });
   };
 
@@ -251,6 +248,7 @@ export default function CreateSchedule({ navigation, route }) {
               flexDirection: "row",
               gap: 5,
             }}
+            onPress={() => navigation.navigate("Schedule")}
           >
             <MaterialIcons name="calendar-month" size={20} color={"white"} />
             <Text
@@ -268,22 +266,43 @@ export default function CreateSchedule({ navigation, route }) {
           <Text style={{ fontSize: 20, fontWeight: "bold" }}>
             Danh sách phòng
           </Text>
-          <ScrollView
-            style={{ marginTop: 10 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 350 }}
-          >
-            {roomsData.length != 0 &&
-              roomsData.map((roomItem) => (
-                <CardRoom
-                  key={roomItem.roomId}
-                  roomInfo={roomItem}
-                  handleRegisterRoom={({ roomId, roomName }) =>
-                    handleTransferScreenRegisterRoom({ roomId, roomName })
-                  }
-                />
-              ))}
-          </ScrollView>
+          {roomsData.length > 0 ? (
+            <ScrollView
+              style={{ marginTop: 10 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 350 }}
+            >
+              {roomsData.length != 0 &&
+                roomsData.map((roomItem) => (
+                  <CardRoom
+                    key={roomItem.roomId}
+                    roomInfo={roomItem}
+                    handleRegisterRoom={() =>
+                      handleTransferScreenRegisterRoom({ roomItem })
+                    }
+                    handleViewDetailRoom={() =>
+                      navigation.navigate("RoomDetail", { room: roomItem })
+                    }
+                  />
+                ))}
+            </ScrollView>
+          ) : (
+            <View
+              style={{
+                width: "100%",
+                height: 300,
+                backgroundColor: "white",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{ fontSize: 18, textAlign: "center", fontWeight: "500" }}
+              >
+                Không tìm thấy phòng...
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 

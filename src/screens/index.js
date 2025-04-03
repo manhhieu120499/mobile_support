@@ -5,6 +5,9 @@ import Approve from "./Approve";
 import InfoRoomRegister from "./InfoRoomRegister";
 import QRScan from "./QRScan";
 import ScheduleDetailRoom from "./ScheduleDetailRoom";
+import Schedule from "./Schedule";
+import TimeLine from "./TimeLine";
+import RoomDetail from "./RoomDetail";
 
 export {
   Profile,
@@ -14,4 +17,7 @@ export {
   InfoRoomRegister,
   QRScan,
   ScheduleDetailRoom,
+  Schedule,
+  TimeLine,
+  RoomDetail,
 };

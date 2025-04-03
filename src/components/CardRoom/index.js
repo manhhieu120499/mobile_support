@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
 import { formatPrice } from "../../utilities";
+import { Pressable } from "react-native";
 
 const style = StyleSheet.create({
   container: {
@@ -39,7 +40,11 @@ const style = StyleSheet.create({
   },
 });
 
-export default function CardRoom({ roomInfo, handleRegisterRoom }) {
+export default function CardRoom({
+  roomInfo,
+  handleRegisterRoom,
+  handleViewDetailRoom,
+}) {
   const {
     roomName = "",
     capacity,
@@ -49,7 +54,7 @@ export default function CardRoom({ roomInfo, handleRegisterRoom }) {
   const { floor = "" } = roomInfo.location;
   const { buildingName = "", branch } = roomInfo.location.building;
   return (
-    <View style={style.container}>
+    <Pressable style={style.container} onPress={handleViewDetailRoom}>
       <View
         style={{
           width: "30%",
@@ -163,6 +168,6 @@ export default function CardRoom({ roomInfo, handleRegisterRoom }) {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }

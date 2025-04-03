@@ -60,6 +60,12 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
       case "scheduleUser": {
         return 90;
       }
+      case "timeline": {
+        return 110;
+      }
+      case "roomdetail": {
+        return 110;
+      }
       default: {
         return 150;
       }
@@ -74,6 +80,12 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
       }
       case "scheduleuser": {
         return 60;
+      }
+      case "timeline": {
+        return 90;
+      }
+      case "roomdetail": {
+        return 90;
       }
       default: {
         return 120;
@@ -116,7 +128,7 @@ export default function Header({
             <MaterialIcons name={leftIcon} size={24} color={"white"} />
           </Pressable>
         )}
-        <Text style={styles.title}>Booking Manager App</Text>
+        <Text style={styles.title}>Đặt lịch họp trực tuyến</Text>
         {rightIcon && (
           <Pressable style={styles.iconRightInContainerTitle}>
             <FontAwesome6Icon name={rightIcon} size={24} color={"white"} />
