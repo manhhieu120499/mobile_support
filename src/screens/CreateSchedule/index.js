@@ -266,25 +266,43 @@ export default function CreateSchedule({ navigation, route }) {
           <Text style={{ fontSize: 20, fontWeight: "bold" }}>
             Danh sách phòng
           </Text>
-          <ScrollView
-            style={{ marginTop: 10 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 350 }}
-          >
-            {roomsData.length != 0 &&
-              roomsData.map((roomItem) => (
-                <CardRoom
-                  key={roomItem.roomId}
-                  roomInfo={roomItem}
-                  handleRegisterRoom={() =>
-                    handleTransferScreenRegisterRoom({ roomItem })
-                  }
-                  handleViewDetailRoom={() =>
-                    navigation.navigate("RoomDetail", { room: roomItem })
-                  }
-                />
-              ))}
-          </ScrollView>
+          {roomsData.length > 0 ? (
+            <ScrollView
+              style={{ marginTop: 10 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 350 }}
+            >
+              {roomsData.length != 0 &&
+                roomsData.map((roomItem) => (
+                  <CardRoom
+                    key={roomItem.roomId}
+                    roomInfo={roomItem}
+                    handleRegisterRoom={() =>
+                      handleTransferScreenRegisterRoom({ roomItem })
+                    }
+                    handleViewDetailRoom={() =>
+                      navigation.navigate("RoomDetail", { room: roomItem })
+                    }
+                  />
+                ))}
+            </ScrollView>
+          ) : (
+            <View
+              style={{
+                width: "100%",
+                height: 300,
+                backgroundColor: "white",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{ fontSize: 18, textAlign: "center", fontWeight: "500" }}
+              >
+                Không tìm thấy phòng...
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 

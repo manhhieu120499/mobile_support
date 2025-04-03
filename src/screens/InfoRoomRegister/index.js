@@ -92,6 +92,7 @@ export default function InfoRoomRegister({ navigation, route }) {
     roomId,
     roomName,
     timeStartBeChoose = "",
+    capacity = 0,
   } = route?.params?.infoRoom != undefined
     ? route.params.infoRoom
     : { roomId: "", roomName: "", timeStartBeChoose: "" };
@@ -430,6 +431,11 @@ export default function InfoRoomRegister({ navigation, route }) {
   const handleDayOnModalDayStart = (selectedDate) => {
     setDayStart(selectedDate);
     if (formatFrequency(frequency) == "ONE_TIME") setDayEnd(selectedDate);
+    if (selectedDate != new Date().toISOString().split("T")[0])
+      setTimeStart("07:00");
+    else {
+      setTimeStart(findTimeFitToRegisterRoom());
+    }
     setIsOpenModalDayStart(false);
   };
 
@@ -552,6 +558,8 @@ export default function InfoRoomRegister({ navigation, route }) {
     }
   };
 
+  console.log(listSelectedParticipantRender);
+
   return (
     <DefaultLayout>
       <Header
@@ -599,6 +607,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                 placeholder="Nhập ngày"
                 value={dayStart}
                 style={style.inputContent}
+                editable={false}
               />
               <TouchableOpacity
                 style={{
@@ -608,6 +617,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                   height: "100%",
                 }}
                 onPress={() => setIsOpenModalDayStart(true)}
+                disabled={route?.params?.infoRoom?.dateSelected ? true : false}
               >
                 <FontAwesomeIcon
                   name="calendar"
@@ -652,7 +662,10 @@ export default function InfoRoomRegister({ navigation, route }) {
               labelOfValue={"time"}
               valueField={"time"}
               nameIcon="punch-clock"
-              isDisable={timeStartBeChoose != ""}
+              isDisable={
+                dayStart == new Date().toISOString().split("T")[0] ||
+                timeStartBeChoose != ""
+              }
             />
           </View>
           <View style={[style.contentItem, { width: "48%" }]}>
@@ -735,7 +748,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                 placeholder="Nhập ngày"
                 value={dayEnd}
                 style={style.inputContent}
-                editable={frequency == "MỘT LẦN" ? false : true}
+                editable={false}
               />
               <TouchableOpacity
                 style={{
@@ -982,11 +995,18 @@ export default function InfoRoomRegister({ navigation, route }) {
               data={listParticipant}
               value={""}
               handleOnChange={(item) => {
-                const { empId, name } = item;
-                setListSelectedParticipantRender((prev) => [
-                  ...prev,
-                  { empId, name },
-                ]);
+                if (listSelectedParticipantRender.length <= capacity - 1) {
+                  const { empId, name } = item;
+                  setListSelectedParticipantRender((prev) => [
+                    ...prev,
+                    { empId, name },
+                  ]);
+                } else {
+                  Alert.alert(
+                    "Thông báo",
+                    "Số lượng người tham gia phải nhỏ hơn hoặc bằng sức chứa của phòng"
+                  );
+                }
               }}
               labelOfValue={"name"}
               valueField={"empId"}

@@ -122,7 +122,7 @@ export default function Header({
             <MaterialIcons name={leftIcon} size={24} color={"white"} />
           </Pressable>
         )}
-        <Text style={styles.title}>Booking Manager App</Text>
+        <Text style={styles.title}>Đặt lịch họp trực tuyến</Text>
         {rightIcon && (
           <Pressable style={styles.iconRightInContainerTitle}>
             <FontAwesome6Icon name={rightIcon} size={24} color={"white"} />

@@ -12,7 +12,12 @@ import {
 import { DefaultLayout } from "../../layouts";
 import Header from "../../layouts/components/Header";
 import { DropdownCustom, ModalCalendar, Popup } from "../../components";
-import { axiosConfig, formatTime, renderTime } from "../../utilities";
+import {
+  axiosConfig,
+  formatTime,
+  renderTime,
+  transferTimeToMinutes,
+} from "../../utilities";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import Toast from "react-native-toast-message";
 
@@ -116,6 +121,7 @@ export default function TimeLine({ navigation, route }) {
       const formatData = res.data.map((room) => ({
         id: room.roomId,
         roomName: room.roomName,
+        capacity: room.capacity,
       }));
       setListRoom(formatData);
     } catch (err) {
@@ -163,6 +169,20 @@ export default function TimeLine({ navigation, route }) {
       item.includes(timePin)
     );
     return checkTime;
+  };
+
+  // check thời gian
+  const handleCheckTimeRegisterRoom = (chooseTime) => {
+    if (dateSelected == new Date().toISOString().split("T")[0]) {
+      const currentTime = new Date().toLocaleTimeString().slice(0, 5);
+      const resultMinus =
+        transferTimeToMinutes(currentTime) - transferTimeToMinutes(chooseTime);
+      console.log(resultMinus);
+      if (resultMinus >= 0) return false;
+      else if (resultMinus < 0) return true;
+    } else {
+      return true;
+    }
   };
 
   const renderScheduleByTimeLine = (timeStart, index) => {
@@ -330,16 +350,26 @@ export default function TimeLine({ navigation, route }) {
                 onPress={() => {
                   if (roomSelected != "") {
                     if (!handleFindScheduleExist(item.time)) {
-                      navigation.navigate("InfoRoomRegister", {
-                        infoRoom: {
-                          roomId: roomSelected.id,
-                          roomName: roomSelected.roomName,
-                          timeStartBeChoose: item.time,
-                          dateSelected,
-                        },
-                      });
+                      // check thời gian
+                      const check = handleCheckTimeRegisterRoom(item.time);
+                      if (!check) {
+                        Alert.alert(
+                          "Thông báo",
+                          "Đã qua khung giờ này nên không thể đặt được"
+                        );
+                        return;
+                      } else {
+                        navigation.navigate("InfoRoomRegister", {
+                          infoRoom: {
+                            roomId: roomSelected.id,
+                            roomName: roomSelected.roomName,
+                            timeStartBeChoose: item.time,
+                            dateSelected,
+                            capacity: roomSelected.capacity,
+                          },
+                        });
+                      }
                     } else {
-                      console.log("Vào");
                       Toast.show({
                         type: "error",
                         text1: "Thông báo",
