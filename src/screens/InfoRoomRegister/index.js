@@ -21,6 +21,7 @@ import {
   renderTime,
   uploadImageToCloudinary,
   findTimeFitToRegisterRoom,
+  formatDayOfWeek,
 } from "../../utilities";
 import {
   CalendarCustom,
@@ -127,6 +128,7 @@ export default function InfoRoomRegister({ navigation, route }) {
       new Date().toISOString().split("T")[0]
   );
   const [timeFinishFrequency, setTimeFinishFrequency] = useState([]);
+  const [listWeekOfDayRender, setListWeekOfDayRender] = useState([]);
 
   // state đóng mở modal
   const [isOpenModalDayStart, setIsOpenModalDayStart] = useState(false);
@@ -144,8 +146,6 @@ export default function InfoRoomRegister({ navigation, route }) {
     isOpenModalDetailDuplicatedSchedule,
     setIsOpenModalDetailDuplicatedSchedule,
   ] = useState(false);
-
-  console.log(timeStart);
 
   // state remove day or weekOfDay
   const [daySelectedRemove, setDaySelectedRemove] = useState([]); // tần suất mỗi ngày (ngày bị loại bỏ)
@@ -490,13 +490,17 @@ export default function InfoRoomRegister({ navigation, route }) {
         break;
       }
       case "WEEKOFDAY": {
-        handleAcceptedRemoveItemCustom(
-          setTimeFinishFrequency,
-          setWeekOfDaySelectedRemove,
-          setIsOpenModalRemoveWeekOfDay,
-          setIsActiveRemoveDay,
-          weekOfDaySelectRemove
+        setTimeFinishFrequency((prev) =>
+          prev.filter(
+            (item) =>
+              !weekOfDaySelectRemove.includes(
+                formatDayOfWeek(item.toString().split(" ")[0])
+              )
+          )
         );
+        setWeekOfDaySelectedRemove((prev) => []);
+        setIsOpenModalRemoveWeekOfDay(false);
+        setIsActiveRemoveDay(true);
         break;
       }
       case "DAYOFWEEK": {
@@ -557,8 +561,6 @@ export default function InfoRoomRegister({ navigation, route }) {
       );
     }
   };
-
-  console.log(listSelectedParticipantRender);
 
   return (
     <DefaultLayout>
@@ -822,7 +824,28 @@ export default function InfoRoomRegister({ navigation, route }) {
                     isActiveRemoveWeekOfDay == false ? "#003b95" : "gray",
                 }}
                 disabled={isActiveRemoveWeekOfDay}
-                onPress={() => setIsOpenModalRemoveWeekOfDay(true)}
+                onPress={() => {
+                  const listTemp = [];
+                  timeFinishFrequency.map((item) => {
+                    if (listTemp.length <= 0) {
+                      listTemp.push(
+                        formatDayOfWeek(item.toString().split(" ")[0])
+                      );
+                    } else {
+                      if (
+                        listTemp.indexOf(
+                          formatDayOfWeek(item.toString().split(" ")[0])
+                        ) == -1
+                      ) {
+                        listTemp.push(
+                          formatDayOfWeek(item.toString().split(" ")[0])
+                        );
+                      }
+                    }
+                  });
+                  setListWeekOfDayRender((prev) => [...listTemp]);
+                  setIsOpenModalRemoveWeekOfDay(true);
+                }}
               >
                 <Text
                   style={{
@@ -1118,7 +1141,7 @@ export default function InfoRoomRegister({ navigation, route }) {
       />
       {/** Modal Choose Week Of Day Remove */}
       <ModalTime
-        timeFinishFrequency={timeFinishFrequency}
+        timeFinishFrequency={listWeekOfDayRender}
         isOpenModal={isOpenModalRemoveWeekOfDay}
         handleCloseModal={() => {
           setIsOpenModalRemoveWeekOfDay(false);
@@ -1129,7 +1152,7 @@ export default function InfoRoomRegister({ navigation, route }) {
         type={"WEEKOFDAY"}
       />
 
-      {/** Modal Choose Week Of Day Remove */}
+      {/** Modal Choose Day Of Week Remove */}
       <ModalTime
         timeFinishFrequency={timeFinishFrequency}
         isOpenModal={isOpenModalRemoveDayOfWeek}
@@ -1184,8 +1207,7 @@ export default function InfoRoomRegister({ navigation, route }) {
                 size={message.reason == "duplicated" ? "large" : "default"}
                 handleOnPopup={() => {
                   setIsOpenModalNotification(false);
-                  if (message.status == "success")
-                    navigation.navigate("CreateSchedule");
+                  if (message.status == "success") navigation.navigate("Tabs");
                 }}
                 handleViewDetailError={() => {
                   setIsOpenModalDetailDuplicatedSchedule(true);
