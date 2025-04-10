@@ -43,14 +43,10 @@ export default function GroupChooseTimeItem({
         {type == "DAY" && (
           <Text style={style.text}>{timeItem.toISOString().split("T")[0]}</Text>
         )}
-        {type == "WEEKOFDAY" && (
-          <Text style={style.text}>
-            {formatDayOfWeek(timeItem.toString().split(" ")[0])}
-          </Text>
-        )}
+        {type == "WEEKOFDAY" && <Text style={style.text}>{timeItem}</Text>}
         {type == "DAYOFWEEK" && (
           <Text style={style.text}>
-            {formatDayOfWeek(timeItem.toString().split(" ")[0])} -
+            {formatDayOfWeek(timeItem.toString().split(" ")[0])} -{" "}
             {timeItem.toISOString().split("T")[0]}
           </Text>
         )}
