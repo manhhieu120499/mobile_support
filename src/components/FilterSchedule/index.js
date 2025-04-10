@@ -16,9 +16,8 @@ const style = StyleSheet.create({
 
 export default function FilterSchedule({openModalMonthSchedule, dayFilter, dateFilter, weekFilter, monthFilter, yearFilter
     , openModalWeekSchedule, openModalYearSchedule, setShowMonthSchedule,
-    openModalMonthFilter, setShowWeekSchedule
+    openModalMonthFilter, setShowWeekSchedule, valueFilter, setValueFilter
 }) {
-    const [valueFilter, setValueFilter] = useState("Ngày");
     const formatDateMonthYear = () => {
         const date = dateFilter < 10 ? `0${dateFilter}` :`${dateFilter}`;
         const month = monthFilter < 10 ? `0${monthFilter}` :`${monthFilter}`;

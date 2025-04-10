@@ -126,6 +126,16 @@ const findTimeFitToRegisterRoom = () => {
   }
 };
 
+const formatUTC7 = (time) => {
+  const temp = new Date(time)
+    .toLocaleString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    })
+    .split(",")[0];
+  const [hour, minutes, second] = temp.split(":").map(Number);
+  return `${hour}:${minutes > 10 ? minutes : "00"}`;
+};
+
 export {
   axiosConfig,
   renderTime,
@@ -136,4 +146,5 @@ export {
   formatDayOfWeek,
   transferTimeToMinutes,
   findTimeFitToRegisterRoom,
+  formatUTC7
 };

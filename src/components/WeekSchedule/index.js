@@ -11,7 +11,7 @@ dayjs.locale('vi');
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
 
-export default function WeekSchedule({yearFilter, weekFilter, setWeekFilter, closeModalWeekSchedule}) {
+export default function WeekSchedule({yearFilter, weekFilter, handleWeekFilterOnChange, closeModalWeekSchedule}) {
     const [weekOfYear, setWeekOfYear] = useState(null); 
     const getWeeksOfYear = (yearFilter) => {
         const weeks = [];
@@ -65,7 +65,8 @@ export default function WeekSchedule({yearFilter, weekFilter, setWeekFilter, clo
                         }}
                             key={key}
                             onPress={() => {
-                                setWeekFilter(week.weekNumber)
+                                const days = dayjs(`${yearFilter}-01-01`).startOf("week").add(7 * (Number(week.weekNumber) - 1), "day");
+                                handleWeekFilterOnChange(days.year(), days.month() + 1, days.date())
                                 closeModalWeekSchedule()
                             }}
                         >

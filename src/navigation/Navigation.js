@@ -17,6 +17,7 @@ import {
 } from "../screens";
 
 import Tabs from "./Tabs";
+import ScheduleDetailRequest from "../screens/ScheduleDetailRequest";
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +44,7 @@ export default function Navigation() {
         <Stack.Screen name="Schedule" component={Schedule} />
         <Stack.Screen name="TimeLine" component={TimeLine} />
         <Stack.Screen name="RoomDetail" component={RoomDetail} />
+        <Stack.Screen name="ScheduleDetailRequest" component={ScheduleDetailRequest} />
       </Stack.Navigator>
     </NavigationContainer>
   );
