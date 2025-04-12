@@ -13,6 +13,8 @@ import YearSchedule from "../../components/YearSchedule";
 import isLeapYear from 'dayjs/plugin/isLeapYear';
 import MonthFilter from "../../components/MonthFilter";
 import ScheduleUserItem from "../../components/ScheduleUserItem";
+import { axiosConfig } from "../../utilities";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 dayjs.extend(weekOfYear);
 dayjs.extend(isLeapYear);
 dayjs.locale('vi');
@@ -27,18 +29,19 @@ const style = StyleSheet.create({
 });
 
 export default function ScheduleUser({ navigation, route }) {
+  const [valueFilter, setValueFilter] = useState("Ngày");
   const [isOpenModalMonthSchedule, setIsOpenModalMonthSchedule] = useState(false);
   const [isOpenModalWeekSchedule, setIsOpenModalWeekSchedule] = useState(false);
   const [isOpenModalYearSchedule, setIsOpenModalYearSchedule] = useState(false);
   const [isOpenModalMonthFilter, setIsOpenModalMonthFilter] = useState(false);
   const [showMonthSchedule, setShowMonthSchedule] = useState(false);
   const [showWeekSchedule, setShowWeekSchedule] = useState(false);
+  const [listSchedule, setListSchedule] = useState([]);
   const [dayFilter, setDayFilter] = useState();
   const [dateFilter, setDateFilter] = useState();
   const [dateCurrentFilter, setDateCurrentFilter] = useState();
   const [monthCurrentFilter, setMonthCurrentFilter] = useState();
   const [yearCurrentFilter, setYearCurrentFilter] = useState();
-  const [weekFilter, setWeekFilter] = useState();
   const [monthFilter, setMonthFilter] = useState();
   const [yearFilter, setYearFilter] = useState();
   const [startOfWeek, setStartOfWeek] = useState();
@@ -86,14 +89,20 @@ export default function ScheduleUser({ navigation, route }) {
       }
       return days;
   };
-  const getFormattedDate = () => {
-    const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
-    const dayOfWeek = days[dayjs().day()];
-    return `${dayOfWeek}, ${dayjs().format('DD/MM/YYYY')}`;
-  };
   const getDayOfWeek = (dayOfWeek) => {
     const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
     return days[dayOfWeek];
+  }
+  const getWeek = () => {
+    const days = dayjs(`${yearFilter}-${monthFilter}-${dateFilter}`);
+    return Number(days.week());
+  }
+  const handleWeekFilterOnChange = (year, month, date) => {
+    const days = dayjs(`${year}-${month}-${date}`);
+    setDayFilter(getDayOfWeek(days.day()));
+    setDateFilter(days.date());
+    setMonthFilter(days.month() + 1);
+    setYearFilter(days.year());
   }
   useEffect(() => {
     setDayFilter(getDayOfWeek(dayjs().day()));
@@ -101,24 +110,112 @@ export default function ScheduleUser({ navigation, route }) {
     setDateCurrentFilter(dayjs().date());
     setYearCurrentFilter(dayjs().year());
     setMonthCurrentFilter(dayjs().month() + 1);
-    setWeekFilter(dayjs().week());
     setMonthFilter(dayjs().month() + 1);
     setYearFilter(dayjs().year());
+    // Luu thong tin user
+    (async () => {
+      try {
+        const res = await axiosConfig().get(
+          "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
+        );
+        
+        await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
+      } catch (err) {
+        console.log(err);
+      }
+    })();
   }, [])
   useEffect(() => {
     if(dateFilter) {
       const days = dayjs(`${yearFilter}-${monthFilter}-${dateFilter}`);
       setDayFilter(getDayOfWeek(days.day()));
       setDateFilter(days.date());
-      setWeekFilter(days.week());
       setMonthFilter(days.month() + 1);
       setYearFilter(days.year());
-      setStartOfWeek(dayjs(`${yearFilter}-01-01`).startOf("week").add(7 * (weekFilter - 1), "day"))
+      setStartOfWeek(dayjs(`${yearFilter}-01-01`).startOf("week").add(7 * (days.week() - 1), "day"))
+      handleFilterSchedule()
     }
   }, [dateFilter, monthFilter, yearFilter])
   useEffect(() => {
-    setStartOfWeek(dayjs(`${yearFilter}-01-01`).startOf("week").add(7 * (weekFilter - 1), "day"))
-  }, [weekFilter])
+    handleFilterSchedule()
+  }, [valueFilter])
+  // Hàm lấy lịch đặt trước
+  const handleFilterSchedule = async () => {
+    const employee = await getCurrentUser();
+    const phone = employee.phone || "0914653334";
+    let start = null;
+    let end = null;
+    
+    try {
+      if(valueFilter === "Ngày") {
+        start = new Date(yearFilter, monthFilter - 1, dateFilter, 0, 0, 0);
+        end = new Date(yearFilter, monthFilter - 1, dateFilter, 23, 59, 59);
+      } else if (valueFilter === "Tuần") {
+        start = new Date(startOfWeek.year(), startOfWeek.month(), startOfWeek.date(), 0, 0, 0);
+        const endOfWeek = startOfWeek.add(7, "day");
+        end = new Date(endOfWeek.year(), endOfWeek.month(), endOfWeek.date(), 0, 0, 0);
+      } else if (valueFilter === "Tháng") {
+        
+        const daysInMonth = dayjs(`${yearFilter}-${monthFilter}-01`);
+        const daysInMonthEnd = dayjs(`${yearFilter}-${monthFilter}-${daysInMonth.daysInMonth() + 1}`);
+        
+        start = new Date(daysInMonth.year(), daysInMonth.month(), daysInMonth.date(), 0, 0, 0);
+        console.log(daysInMonth);
+        console.log(daysInMonthEnd);
+        end = new Date(daysInMonthEnd.year(), daysInMonthEnd.month(), daysInMonthEnd.date(), 0, 0, 0);
+      }
+      
+      console.log(`/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${start.toISOString()}&dayEnd=${end.toISOString()}`);
+      
+      const res = await axiosConfig().get(
+        `/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${start.toISOString()}&dayEnd=${end.toISOString()}`
+      );
+      
+      const groupDate = [];
+      const result = [];
+      res.data.sort((a, b) => new Date(a.timeStart) - new Date(b.timeStart));
+      res.data.forEach((item) => {
+        const date = new Date(item.timeStart);
+        const dateGroup = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+        if(groupDate.indexOf(dateGroup) == -1) {
+          groupDate.push(dateGroup);
+        }
+      })
+      groupDate.forEach((group) => {
+        const data = res.data.filter((item) => {
+          const dateConvert = new Date(item.timeStart);
+          return group === `${dateConvert.getDate()}/${dateConvert.getMonth() + 1}/${dateConvert.getFullYear()}`;
+        })
+        result.push({
+          time: group,
+          data
+        })
+      })
+      setListSchedule(result)
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  // Láy thông tin user
+  const getCurrentUser = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem("current_user");
+      if (jsonValue != null) {
+        const user = JSON.parse(jsonValue);
+        return user;
+      }
+      return null;
+    } catch (e) {
+      console.error("Lỗi khi lấy current_user từ AsyncStorage", e);
+      return null;
+    }
+  };
+  // xử lý chuyển đến trang lịch chi tiết
+  const handleTransferScreenScheduleDetail = ({infoScheduleRequest}) => {
+    navigation.navigate("ScheduleDetailRequest", {
+      infoScheduleRequest
+    });
+  }
   return (
     <DefaultLayout>
       <Header nameScreen="scheduleUser" />
@@ -131,9 +228,11 @@ export default function ScheduleUser({ navigation, route }) {
           <FilterSchedule 
             dayFilter={dayFilter}
             dateFilter={dateFilter}
-            weekFilter={weekFilter}
+            weekFilter={getWeek()}
             monthFilter={monthFilter}
             yearFilter={yearFilter}
+            valueFilter={valueFilter}
+            setValueFilter={setValueFilter}
             openModalMonthSchedule={openModalMonthSchedule}
             openModalWeekSchedule={openModalWeekSchedule}
             openModalYearSchedule={openModalYearSchedule}
@@ -188,13 +287,14 @@ export default function ScheduleUser({ navigation, route }) {
               />
             </View>
           }
-          {showWeekSchedule && <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingTop: 0, padding: 12 }}>
+          {showWeekSchedule && <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 0, padding: 12 }}>
             {weekDays.map((day, index) => (
-              <TouchableOpacity style={{backgroundColor: "white", borderRadius: 5,
+              <TouchableOpacity style={[{backgroundColor: "white", borderRadius: 5,
                 alignItems: "center",
-                padding: 5,
-                paddingVertical: 10
-              }} key={index}>
+                width: `${100 / 8}%`,
+                paddingVertical: 10,
+                
+              }, weekDays.length != index && {marginRight: `${100 / 8 / 6 }%`}]} key={index}>
                 <Text  style={[{ width: 40, textAlign: 'center'},
                     day === "Th 7" || day === "CN" ? {color: "red"} : {}
                 ]}>
@@ -208,12 +308,12 @@ export default function ScheduleUser({ navigation, route }) {
           </View>}
           <View style={{
             flex: 1,
-            height: 1000,
             backgroundColor: "white",
+            paddingBottom: 30
           }}>
-            <ScheduleUserItem />
-            <ScheduleUserItem />
-            <ScheduleUserItem />
+            {listSchedule.map((item, index) => (
+              <ScheduleUserItem handleTransferScreenScheduleDetail={handleTransferScreenScheduleDetail} key={index} data={item} />
+            ))}
           </View>
         </ScrollView>
       </View>
@@ -223,7 +323,7 @@ export default function ScheduleUser({ navigation, route }) {
           dateCurrentFilter={dateCurrentFilter}
           monthCurrentFilter={monthCurrentFilter}
           yearCurrentFilter={yearCurrentFilter}
-          weekFilter={weekFilter}
+          weekFilter={getWeek()}
           monthFilter={monthFilter}
           yearFilter={yearFilter}
           setDateFilter={setDateFilter}
@@ -235,10 +335,10 @@ export default function ScheduleUser({ navigation, route }) {
       <ModalBottom padding={0} heightTop="10%" isOpenModal={isOpenModalWeekSchedule} closeModal={closeModalWeekSchedule}>
         <WeekSchedule
           dateFilter={dateFilter}
-          weekFilter={weekFilter}
+          weekFilter={getWeek()}
           monthFilter={monthFilter}
           yearFilter={yearFilter}
-          setWeekFilter={setWeekFilter}
+          handleWeekFilterOnChange={handleWeekFilterOnChange}
           closeModalWeekSchedule={closeModalWeekSchedule}
         />
       </ModalBottom>
@@ -246,10 +346,9 @@ export default function ScheduleUser({ navigation, route }) {
         <YearSchedule
           dateFilter={dateFilter}
           yearCurrentFilter={yearCurrentFilter}
-          weekFilter={weekFilter}
+          weekFilter={getWeek()}
           monthFilter={monthFilter}
           yearFilter={yearFilter}
-          setWeekFilter={setWeekFilter}
           setYearFilter={setYearFilter}
           closeModalYearSchedule={closeModalYearSchedule}
         />

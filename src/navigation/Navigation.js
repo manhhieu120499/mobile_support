@@ -18,6 +18,7 @@ import {
 } from "../screens";
 
 import Tabs from "./Tabs";
+import ScheduleDetailRequest from "../screens/ScheduleDetailRequest";
 
 const Stack = createNativeStackNavigator();
 

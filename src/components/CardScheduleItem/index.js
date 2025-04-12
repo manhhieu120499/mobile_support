@@ -1,6 +1,11 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
-export default function CardScheduleItem() {
+export default function CardScheduleItem({data, handleTransferScreenScheduleDetail}) {
+    const getTime = (time) => {
+        const date = new Date(time);
+        const minute = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()
+        return `${date.getHours()}:${minute}`
+    }
     return (
         <TouchableOpacity style={{
             margin: 10,
@@ -8,25 +13,34 @@ export default function CardScheduleItem() {
             borderRadius: 10,
             borderWidth: 1,
             borderStyle: "solid",
-            borderColor: "#ffe031",
+            borderColor: data.statusReservation === "PENDING" ? "#ffe031" : "#2196f3",
             borderLeftWidth: 10,
-            backgroundColor:"#fff8ce"
-        }}>
+            backgroundColor: data.statusReservation === "PENDING" ? "#fff8ce" : "#e3f2fd",
+        }}
+            onPress={() => {
+                handleTransferScreenScheduleDetail({infoScheduleRequest: 
+                    data
+                })
+            }}
+        >
             <Text style={{fontSize: 16, fontWeight: 700, marginBottom: 5}}>
-                Phương hướng doanh nghiệp
+                {data.title}
             </Text>
-            <View style={{flexDirection: "row", alignItems: "center", marginBottom: 5}}>
-                <View style={{
-                    borderRadius: 999,
-                    width: 7,
-                    height: 7,
-                    backgroundColor: "red",
-                    marginRight: 5,
-                }}></View>
-                <Text>8:30 - 9:30</Text>
+            <View style={{flexDirection: "row", alignItems: "center", marginBottom: 5,
+                justifyContent: "space-between"
+            }}>
+                <View style={{flexDirection: "row", alignItems: "center", marginBottom: 5}}>
+                    <View style={{
+                        borderRadius: 999,
+                        width: 7,
+                        height: 7,
+                        backgroundColor: "red",
+                        marginRight: 5,
+                    }}></View>
+                    <Text>{`${getTime(data.timeStart)}-${getTime(data.timeEnd)}`}</Text>
+                </View>
+                <Text style={{marginBottom: 5, fontWeight: "bold"}}>{`Phòng ${data.room.roomName}`}</Text>
             </View>
-            <Text style={{marginBottom: 5}}>Phòng phát triển</Text>
-            <Text>Vị trí: Tầng 2 - tòa D - chi nhánh TP. Hồ Chí Minh</Text>
         </TouchableOpacity>
     )
 }

@@ -2,7 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
-export default function({yearFilter, yearCurrentFilter, setYearFilter, closeModalYearSchedule, setWeekFilter}) {
+export default function({yearFilter, yearCurrentFilter, setYearFilter, closeModalYearSchedule}) {
     return (
         <View style={{flex: 1,height: "80%", paddingBottom: 15}}>
             <Text style={{fontSize: 17, textAlign: "center",
@@ -16,7 +16,6 @@ export default function({yearFilter, yearCurrentFilter, setYearFilter, closeModa
                 paddingVertical: 20,
                 }, yearFilter == yearCurrentFilter - 1 && {backgroundColor: "rgba(0,0,0,0.2)"}]}
                 onPress={() => {
-                    setWeekFilter(1)
                     setYearFilter(yearCurrentFilter - 1);
                     closeModalYearSchedule()
                 }}
