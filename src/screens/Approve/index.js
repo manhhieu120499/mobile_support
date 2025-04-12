@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -7,13 +7,24 @@ import {
   Pressable,
   TouchableOpacity,
   Button,
+  FlatList,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { DefaultLayout } from "../../layouts";
 import Header from "../../layouts/components/Header";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
-import { ModalCalendar, ScheduleCard } from "../../components";
+import {
+  ModalCalendar,
+  ScheduleCard,
+  Popup,
+  DropdownCustom,
+} from "../../components";
 import CheckBox from "expo-checkbox";
+import { axiosConfig } from "../../utilities";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDebounce } from "../../hooks";
 
 const style = StyleSheet.create({
   container: {
@@ -93,15 +104,125 @@ export default function Approve({ navigation, route }) {
   const [dayStart, setDayStart] = useState("");
   const [dayEnd, setDayEnd] = useState("");
   const [isCheckAll, setIsCheckAll] = useState(false);
+  const [inputSearch, setInputSearch] = useState("");
+  const debouncedValue = useDebounce(inputSearch, 200);
+
+  const [listApproveSchedule, setListApproveSchedule] = useState([]);
+  const [listApproveScheduleFilter, setListApproveScheduleFilter] = useState(
+    []
+  );
+
+  const [isLoading, setIslLoading] = useState(false);
+  const [message, setMessage] = useState({
+    body: "",
+    status: "",
+  });
+  const [isOpenModalNotification, setIsOpenModalNotification] = useState(false);
+
+  const [filterSchedule, setFilterSchedule] = useState("Đang chờ");
+
+  // fetch list approve schedule
+  const fetchApproveScheduleData = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("current_user");
+      const user = JSON.parse(userJson);
+      const res = await axiosConfig().get(
+        `/api/v1/requestForm/getRequestFormByApproverId?approverId=${user.employeeId}&statusRequestForm=PENDING`
+      );
+      setListApproveSchedule(res.data);
+      setListApproveScheduleFilter(
+        res?.data?.filter((item) => item.statusRequestForm == "PENDING")
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchApproveScheduleData();
+  }, []);
+
+  useEffect(() => {
+    let nameFilter = "";
+    switch (filterSchedule) {
+      case "Đang chờ": {
+        nameFilter = "PENDING";
+        break;
+      }
+      case "Đã phê duyệt": {
+        nameFilter = "APPROVED";
+        break;
+      }
+      case "Đã từ chối": {
+        nameFilter = "REJECT";
+        break;
+      }
+    }
+    setListApproveScheduleFilter(
+      listApproveSchedule.filter((item) => item.statusRequestForm == nameFilter)
+    );
+  }, [filterSchedule]);
+
+  useEffect(() => {
+    if (debouncedValue == "") {
+      setListApproveScheduleFilter([...listApproveSchedule]);
+    } else {
+      const inputRegex = new RegExp(debouncedValue, "giu");
+      console.log(inputRegex);
+      setListApproveScheduleFilter((prev) =>
+        listApproveSchedule.filter(
+          (item) =>
+            inputRegex.test(item.reservations[0].title) ||
+            inputRegex.test(item.reservations[0].booker.employeeName)
+        )
+      );
+    }
+  }, [debouncedValue]);
+
+  // handle when approve success
+  const handleApprovedOrRejectSuccess = (scheduleBeApprovedId) => {
+    setListApproveScheduleFilter((prev) =>
+      prev.filter((item) => item.requestFormId != scheduleBeApprovedId)
+    );
+  };
+
+  // handle approve all schedule
+  const handleApproveAllSchedule = async () => {
+    const arrIds = listApproveScheduleFilter.map((item) => item.requestFormId);
+    setIsOpenModalNotification(true);
+    try {
+      setIslLoading(true);
+      const res = await axiosConfig().post(
+        `/api/v1/requestForm/approveRequestForm`,
+        arrIds
+      );
+      if (res.data) {
+        setMessage({
+          body: "Phê duyệt thành công",
+          status: "success",
+        });
+        setListApproveScheduleFilter((prev) => []);
+      }
+    } catch (err) {
+      setMessage({
+        body: `Phê duyệt không thành công.\n ${err.response.data}`,
+        status: "error",
+      });
+      console.log(err);
+    } finally {
+      setIslLoading(false);
+    }
+  };
 
   return (
     <DefaultLayout>
       <Header nameScreen="approve">
         <View style={style.containerFilterSearch}>
           <TextInput
-            placeholder="Nhập tên cuộc họp hoặc tên người đặt..."
+            placeholder="Nhập tên cuộc họp hoặc tên người đặt"
             style={style.inputContainerFilterSearch}
             onChangeText={(text) => setInputSearch(text)}
+            value={inputSearch}
           />
           <Pressable style={style.btnSearchInContainerFilterSearch}>
             <MaterialIcons name="search" size={26} color={"white"} />
@@ -208,6 +329,7 @@ export default function Approve({ navigation, route }) {
                   },
                 ]}
                 disabled={!isCheckAll}
+                onPress={handleApproveAllSchedule}
               >
                 <Text style={style.textButton}>Phê duyệt</Text>
               </TouchableOpacity>
@@ -229,11 +351,11 @@ export default function Approve({ navigation, route }) {
         <View
           style={{ width: "100%", backgroundColor: "#e7e7e7", height: 1 }}
         />
-        <View style={{ width: "100%", marginTop: 10 }}>
+        <View style={{ width: "100%", marginTop: 10, flexDirection: "row" }}>
           <View
             style={{
               flexDirection: "row",
-              width: "100%",
+              width: "50%",
               alignItems: "center",
               gap: 10,
             }}
@@ -244,10 +366,53 @@ export default function Approve({ navigation, route }) {
             />
             <Text style={{ fontSize: 17, fontWeight: "500" }}>Chọn tất cả</Text>
           </View>
+          <View style={{ width: "50%" }}>
+            <DropdownCustom
+              data={[
+                { name: "Đang chờ" },
+                { name: "Đã phê duyệt" },
+                { name: "Đã từ chối" },
+              ]}
+              value={filterSchedule}
+              labelOfValue={"name"}
+              valueField={"name"}
+              handleOnChange={(item) => setFilterSchedule(item.name)}
+              isVisibleSearch={false}
+              nameIcon="filter-alt"
+            />
+          </View>
         </View>
       </View>
-      <ScheduleCard isChecked={isCheckAll} />
-      <ScheduleCard isChecked={isCheckAll} />
+      <View
+        style={{
+          width: "100%",
+          height: 450,
+          backgroundColor: "#f4f4f4",
+          marginTop: 10,
+        }}
+      >
+        <FlatList
+          data={listApproveScheduleFilter}
+          contentContainerStyle={{
+            paddingBottom: 50,
+          }}
+          renderItem={({ item }) => {
+            return (
+              <ScheduleCard
+                scheduleInfo={item}
+                isChecked={isCheckAll}
+                setLoading={setIslLoading}
+                setMessage={setMessage}
+                setOpenModalNotification={setIsOpenModalNotification}
+                handleApprovedOrRejectSuccess={handleApprovedOrRejectSuccess}
+                navigation={navigation}
+              />
+            );
+          }}
+          keyExtractor={(item) => item.requestFormId.toString()}
+        />
+      </View>
+
       {/** Modal choose day start */}
       <ModalCalendar
         isOpenModal={isOpenModalDayStart}
@@ -264,6 +429,56 @@ export default function Approve({ navigation, route }) {
           setIsOpenModalDayEnd(false);
         }}
       />
+
+      {/** Modal loading and notification */}
+      {isOpenModalNotification && (
+        <Modal transparent={true}>
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+          >
+            {isLoading == true ? (
+              <View
+                style={{
+                  width: "80%",
+                  height: 150,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "white",
+                  alignSelf: "center",
+                  borderRadius: 10,
+                  top: "35%",
+                }}
+              >
+                <Text
+                  style={{ fontSize: 22, fontWeight: "bold", marginBottom: 15 }}
+                >
+                  Đang xử lý yêu cầu...
+                </Text>
+                <ActivityIndicator size={40} />
+              </View>
+            ) : (
+              <Popup
+                isOpen={isOpenModalNotification}
+                title={"Thông báo"}
+                status={message.status}
+                content={message.body}
+                titleButtonAccept={"OK"}
+                size={"medium"}
+                handleOnPopup={() => {
+                  setIsOpenModalNotification(false);
+                }}
+              />
+            )}
+          </View>
+        </Modal>
+      )}
     </DefaultLayout>
   );
 }

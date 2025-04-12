@@ -14,6 +14,7 @@ import {
   Schedule,
   TimeLine,
   RoomDetail,
+  ScheduleDetailRequest,
 } from "../screens";
 
 import Tabs from "./Tabs";
@@ -43,6 +44,10 @@ export default function Navigation() {
         <Stack.Screen name="Schedule" component={Schedule} />
         <Stack.Screen name="TimeLine" component={TimeLine} />
         <Stack.Screen name="RoomDetail" component={RoomDetail} />
+        <Stack.Screen
+          name="ScheduleDetailRequest"
+          component={ScheduleDetailRequest}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -8,6 +8,7 @@ import ScheduleDetailRoom from "./ScheduleDetailRoom";
 import Schedule from "./Schedule";
 import TimeLine from "./TimeLine";
 import RoomDetail from "./RoomDetail";
+import ScheduleDetailRequest from "./ScheduleDetailRequest";
 
 export {
   Profile,
@@ -20,4 +21,5 @@ export {
   Schedule,
   TimeLine,
   RoomDetail,
+  ScheduleDetailRequest,
 };

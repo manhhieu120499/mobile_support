@@ -155,7 +155,7 @@ export default function CreateSchedule({ navigation, route }) {
     if (debounceValue == "") {
       fetchRoomData();
     } else {
-      const regex = new RegExp(debounceValue, "gi");
+      const regex = new RegExp(debounceValue, "giu");
       setRoomsData((prev) =>
         roomsDataDefault.filter((room) => room.roomName.match(regex))
       );
@@ -167,7 +167,7 @@ export default function CreateSchedule({ navigation, route }) {
     (async () => {
       try {
         const res = await axiosConfig().get(
-          "/api/v1/employee/getEmployeeByPhone?phone=0914653331"
+          "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
         );
         await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
       } catch (err) {
