@@ -44,14 +44,14 @@ const style = StyleSheet.create({
   },
 });
 
-const APPROVED = "APPROVED";
-const UPDATE = "UPDATE";
-const PENDING = "PENDING";
+const RESERVATION_ONETIME = "RESERVATION_ONETIME";
+const RESERVATION_RECURRING = "RESERVATION_RECURRING";
+const UPDATE_RESERVATION = "UPDATE_RESERVATION";
 
 const formatRequest = {
-  [APPROVED]: "Phê duyệt",
-  [UPDATE]: "Cập nhật",
-  [PENDING]: "Đặt lịch",
+  [RESERVATION_ONETIME]: "Đặt lịch",
+  [RESERVATION_RECURRING]: "Đặt lịch",
+  [UPDATE_RESERVATION]: "Cập nhật",
 };
 
 export default function ScheduleCard({
@@ -63,6 +63,7 @@ export default function ScheduleCard({
   handleApprovedOrRejectSuccess,
   navigation,
 }) {
+  console.log(scheduleInfo.statusRequestForm);
   const [inputReject, setInputReject] = useState("");
   const [isOpenModalReject, setIsOpenModalReject] = useState(false);
   const handleApproveReservation = async () => {
@@ -91,6 +92,10 @@ export default function ScheduleCard({
     }
   };
   const handleRejectReservation = async () => {
+    if (inputReject == "") {
+      Alert.alert("Thông báo", "Vui lòng nhập lý do từ chối");
+      return;
+    }
     setOpenModalNotification(true);
     try {
       setLoading(true);
@@ -145,7 +150,7 @@ export default function ScheduleCard({
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={[style.text, { width: "55%" }]}>
                 <Text style={style.bold}>Loại yêu cầu:</Text>{" "}
-                {formatRequest[scheduleInfo?.statusRequestForm]}
+                {formatRequest[scheduleInfo?.typeRequestForm]}
               </Text>
             </View>
             <Text style={style.text}>
@@ -162,30 +167,34 @@ export default function ScheduleCard({
         </View>
 
         <View style={{ flexDirection: "row", width: "100%", gap: 10 }}>
-          <TouchableOpacity
-            style={[
-              style.buttonSmall,
-              {
-                backgroundColor: isChecked ? "#ccc" : "#36cb33",
-              },
-            ]}
-            disabled={isChecked}
-            onPress={handleApproveReservation}
-          >
-            <Text style={style.textButton}>Phê duyệt</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              style.buttonSmall,
-              {
-                backgroundColor: isChecked ? "#ccc" : "#dc3640",
-              },
-            ]}
-            disabled={isChecked}
-            onPress={() => setIsOpenModalReject(true)}
-          >
-            <Text style={style.textButton}>Từ chối</Text>
-          </TouchableOpacity>
+          {scheduleInfo.statusRequestForm == "PENDING" && (
+            <TouchableOpacity
+              style={[
+                style.buttonSmall,
+                {
+                  backgroundColor: isChecked ? "#ccc" : "#36cb33",
+                },
+              ]}
+              disabled={isChecked}
+              onPress={handleApproveReservation}
+            >
+              <Text style={style.textButton}>Phê duyệt</Text>
+            </TouchableOpacity>
+          )}
+          {scheduleInfo.statusRequestForm == "PENDING" && (
+            <TouchableOpacity
+              style={[
+                style.buttonSmall,
+                {
+                  backgroundColor: isChecked ? "#ccc" : "#dc3640",
+                },
+              ]}
+              disabled={isChecked}
+              onPress={() => setIsOpenModalReject(true)}
+            >
+              <Text style={style.textButton}>Từ chối</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[
               style.buttonSmall,
@@ -195,17 +204,7 @@ export default function ScheduleCard({
             ]}
             onPress={() =>
               navigation.navigate("ScheduleDetailRequest", {
-                infoScheduleRequest: {
-                  booker: scheduleInfo.reservations[0].booker,
-                  reservationId: scheduleInfo.requestFormId,
-                  statusReservation: scheduleInfo.statusRequestForm,
-                  timeRequest: scheduleInfo.timeRequest,
-                  room: scheduleInfo.reservations[0].room,
-                  documents: scheduleInfo.reservations[0].filePaths,
-                  services: scheduleInfo.reservations[0].services,
-                  attendants: scheduleInfo.reservations[0].attendants,
-                  requestInfo: scheduleInfo.reservations[0],
-                },
+                infoScheduleRequest: scheduleInfo.reservations[0],
               })
             }
           >

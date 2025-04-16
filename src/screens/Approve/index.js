@@ -100,9 +100,7 @@ const style = StyleSheet.create({
 
 export default function Approve({ navigation, route }) {
   const [isOpenModalDayStart, setIsOpenModalDayStart] = useState(false);
-  const [isOpenModalDayEnd, setIsOpenModalDayEnd] = useState(false);
   const [dayStart, setDayStart] = useState("");
-  const [dayEnd, setDayEnd] = useState("");
   const [isCheckAll, setIsCheckAll] = useState(false);
   const [inputSearch, setInputSearch] = useState("");
   const debouncedValue = useDebounce(inputSearch, 200);
@@ -111,6 +109,9 @@ export default function Approve({ navigation, route }) {
   const [listApproveScheduleFilter, setListApproveScheduleFilter] = useState(
     []
   );
+
+  const [listRoomData, setListRoomData] = useState([]);
+  const [filterRoom, setFilterRoom] = useState("");
 
   const [isLoading, setIslLoading] = useState(false);
   const [message, setMessage] = useState({
@@ -122,46 +123,76 @@ export default function Approve({ navigation, route }) {
   const [filterSchedule, setFilterSchedule] = useState("Đang chờ");
 
   // fetch list approve schedule
-  const fetchApproveScheduleData = async () => {
+  const fetchApproveScheduleData = async (status) => {
     try {
       const userJson = await AsyncStorage.getItem("current_user");
       const user = JSON.parse(userJson);
       const res = await axiosConfig().get(
-        `/api/v1/requestForm/getRequestFormByApproverId?approverId=${user.employeeId}&statusRequestForm=PENDING`
+        `/api/v1/requestForm/getRequestFormByApproverId?approverId=${user.employeeId}&statusRequestForm=${status}`
       );
-      setListApproveSchedule(res.data);
-      setListApproveScheduleFilter(
-        res?.data?.filter((item) => item.statusRequestForm == "PENDING")
-      );
+      let arrSortByTime = [];
+      if (filterSchedule == "Đang chờ") {
+        arrSortByTime = res.data
+          .sort((a, b) => new Date(a.timeRequest) - new Date(b.timeRequest))
+          .reverse();
+      } else {
+        arrSortByTime = res.data
+          .sort((a, b) => new Date(a.timeResponse) - new Date(b.timeResponse))
+          .reverse();
+      }
+      setListApproveSchedule(arrSortByTime);
+      setListApproveScheduleFilter(arrSortByTime);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchRoomData = async () => {
+    try {
+      // lấy api danh sách phòng phê duyệt
+      const res = await axiosConfig().get();
     } catch (err) {
       console.log(err);
     }
   };
 
   useEffect(() => {
-    fetchApproveScheduleData();
+    fetchApproveScheduleData("PENDING");
   }, []);
 
   useEffect(() => {
-    let nameFilter = "";
     switch (filterSchedule) {
       case "Đang chờ": {
-        nameFilter = "PENDING";
+        fetchApproveScheduleData("PENDING");
         break;
       }
       case "Đã phê duyệt": {
-        nameFilter = "APPROVED";
+        fetchApproveScheduleData("APPROVED");
         break;
       }
       case "Đã từ chối": {
-        nameFilter = "REJECT";
+        fetchApproveScheduleData("REJECTED");
         break;
       }
     }
-    setListApproveScheduleFilter(
-      listApproveSchedule.filter((item) => item.statusRequestForm == nameFilter)
-    );
   }, [filterSchedule]);
+
+  useEffect(() => {
+    // room thay đổi thì load lại danh sách phòng rồi cập nhật vào trong list filterSchedule
+  }, [filterRoom]);
+
+  useEffect(() => {
+    if (dayStart != "") {
+      console.log(dayStart);
+
+      setListApproveScheduleFilter((prev) =>
+        prev.filter(
+          (schedule) =>
+            schedule.requestReservation.timeStart.split("T")[0] == dayStart
+        )
+      );
+    }
+  }, [dayStart]);
 
   useEffect(() => {
     if (debouncedValue == "") {
@@ -233,11 +264,13 @@ export default function Approve({ navigation, route }) {
         <View style={{ width: "100%", flexDirection: "row" }}>
           <View
             style={{
-              width: "42%",
+              width: "100%",
               marginVertical: 7,
+              flexDirection: "row",
+              justifyContent: "space-between",
             }}
           >
-            <View style={style.contentItem}>
+            <View style={{ width: "42%" }}>
               <View
                 style={[
                   style.inputInContentItem,
@@ -271,101 +304,92 @@ export default function Approve({ navigation, route }) {
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={style.contentItem}>
-              <View
-                style={[
-                  style.inputInContentItem,
-                  {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  },
-                ]}
-              >
-                <TextInput
-                  placeholder="Ngày kết thúc"
-                  value={dayEnd}
-                  style={style.inputContent}
-                />
-                <TouchableOpacity
-                  style={{
-                    width: "15%",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                  onPress={() => setIsOpenModalDayEnd(true)}
-                >
-                  <FontAwesomeIcon
-                    name="calendar"
-                    size={20}
-                    style={{ textAlign: "right" }}
-                    color={"black"}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
 
-          <View
-            style={{
-              width: "58%",
-              marginVertical: 7,
-              justifyContent: "center",
-              gap: 15,
-              alignItems: "center",
-              paddingHorizontal: 10,
-            }}
-          >
-            <TouchableOpacity style={style.buttonMedium}>
-              <Text style={style.textButton}>Tìm kiếm</Text>
-            </TouchableOpacity>
-            <View style={{ width: "100%", flexDirection: "row", gap: 10 }}>
-              <TouchableOpacity
-                style={[
-                  style.buttonSmall,
-                  {
-                    backgroundColor: !isCheckAll ? "#ccc" : "#36cb33",
-                  },
-                ]}
-                disabled={!isCheckAll}
-                onPress={handleApproveAllSchedule}
-              >
-                <Text style={style.textButton}>Phê duyệt</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  style.buttonSmall,
-                  {
-                    backgroundColor: !isCheckAll ? "#ccc" : "#dc3640",
-                  },
-                ]}
-                disabled={!isCheckAll}
-              >
-                <Text style={style.textButton}>Từ chối</Text>
-              </TouchableOpacity>
+            {/** drop box danh sách phòng */}
+            <View style={{ width: "50%" }}>
+              <DropdownCustom
+                data={[{ name: "1" }, { name: "2" }, { name: "3" }]}
+                value={""}
+                labelOfValue={"name"}
+                valueField={"name"}
+                handleOnChange={(item) => setFilterSchedule(item.name)}
+                isVisibleSearch={false}
+                nameIcon="filter-alt"
+              />
             </View>
           </View>
         </View>
+        {filterSchedule == "Đang chờ" && (
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "row",
+              marginVertical: 7,
+              justifyContent: "flex-end",
+              gap: 15,
+              alignItems: "center",
+            }}
+          >
+            <TouchableOpacity
+              style={[
+                style.buttonSmall,
+                {
+                  backgroundColor: !isCheckAll ? "#ccc" : "#36cb33",
+                },
+              ]}
+              disabled={!isCheckAll}
+              onPress={handleApproveAllSchedule}
+            >
+              <Text style={style.textButton}>Phê duyệt</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                style.buttonSmall,
+                {
+                  backgroundColor: !isCheckAll ? "#ccc" : "#dc3640",
+                },
+              ]}
+              disabled={!isCheckAll}
+            >
+              <Text style={style.textButton}>Từ chối</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {/** line straight */}
         <View
           style={{ width: "100%", backgroundColor: "#e7e7e7", height: 1 }}
         />
-        <View style={{ width: "100%", marginTop: 10, flexDirection: "row" }}>
-          <View
-            style={{
-              flexDirection: "row",
-              width: "50%",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <CheckBox
-              value={isCheckAll}
-              onValueChange={() => setIsCheckAll((prev) => !prev)}
+        <View
+          style={{
+            width: "100%",
+            marginTop: 10,
+            flexDirection: "row",
+          }}
+        >
+          {filterSchedule == "Đang chờ" ? (
+            <View
+              style={{
+                flexDirection: "row",
+                width: "50%",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <CheckBox
+                value={isCheckAll}
+                onValueChange={() => setIsCheckAll((prev) => !prev)}
+              />
+              <Text style={{ fontSize: 17, fontWeight: "500" }}>
+                Chọn tất cả
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={{
+                width: "50%",
+              }}
             />
-            <Text style={{ fontSize: 17, fontWeight: "500" }}>Chọn tất cả</Text>
-          </View>
+          )}
           <View style={{ width: "50%" }}>
             <DropdownCustom
               data={[
@@ -419,14 +443,6 @@ export default function Approve({ navigation, route }) {
         handleOnModal={(dateSelected) => {
           setDayStart(dateSelected);
           setIsOpenModalDayStart(false);
-        }}
-      />
-      {/** Modal choose day end */}
-      <ModalCalendar
-        isOpenModal={isOpenModalDayEnd}
-        handleOnModal={(dateSelected) => {
-          setDayEnd(dateSelected);
-          setIsOpenModalDayEnd(false);
         }}
       />
 

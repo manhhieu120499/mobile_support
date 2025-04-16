@@ -77,7 +77,8 @@ export default function ScheduleDetailRequest({ navigation, route }) {
   const [isOpenModalService, setIsOpenModalService] = useState(false);
   const [isOpenModalAttendant, setIsOpenModalAttendant] = useState(false);
   const [isOpenModalDocument, setIsOpenModalDocument] = useState(false);
-  
+
+  console.log("info", route.params.infoScheduleRequest);
 
   useEffect(() => {
     setListService(
@@ -195,7 +196,7 @@ export default function ScheduleDetailRequest({ navigation, route }) {
               <Text
                 style={[styles.title, { textAlign: "center", marginBottom: 7 }]}
               >
-                Trạng thái phê duyệt
+                Trạng thái
               </Text>
               <Text
                 style={[
@@ -228,9 +229,7 @@ export default function ScheduleDetailRequest({ navigation, route }) {
             <View style={styles.informationItem}>
               <Text style={styles.title}>Tiêu đề: </Text>
               <Text style={styles.info}>
-                {infoScheduleRequest
-                  ? infoScheduleRequest.title
-                  : ""}
+                {infoScheduleRequest ? infoScheduleRequest.title : ""}
               </Text>
             </View>
             <View style={[styles.informationItem, { gap: 0, height: 55 }]}>
@@ -277,17 +276,13 @@ export default function ScheduleDetailRequest({ navigation, route }) {
             <View style={styles.informationItem}>
               <Text style={styles.title}>Ghi chú: </Text>
               <Text style={styles.info}>
-                {infoScheduleRequest
-                  ? infoScheduleRequest.note
-                  : ""}
+                {infoScheduleRequest ? infoScheduleRequest.note : ""}
               </Text>
             </View>
             <View style={styles.informationItem}>
               <Text style={styles.title}>Mô tả: </Text>
               <Text numberOfLines={1} ellipsizeMode="tail" style={styles.info}>
-                {infoScheduleRequest
-                  ? infoScheduleRequest.description
-                  : ""}
+                {infoScheduleRequest ? infoScheduleRequest.description : ""}
               </Text>
             </View>
             <View style={styles.informationItem}>
@@ -441,15 +436,17 @@ export default function ScheduleDetailRequest({ navigation, route }) {
             <Text style={{ fontSize: 18, fontWeight: "500", marginTop: 15 }}>
               Danh sách tài liệu
             </Text>
-            {infoScheduleRequest.filePaths.length == 0 && 
-              <View style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center"
-              }}> 
+            {infoScheduleRequest.documents == 0 && (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <Text>Không có tài liệu</Text>
               </View>
-            }
+            )}
             <FlatList
               style={{ marginTop: 45, paddingHorizontal: 25 }}
               data={infoScheduleRequest.filePaths}
@@ -529,15 +526,17 @@ export default function ScheduleDetailRequest({ navigation, route }) {
             <Text style={{ fontSize: 18, fontWeight: "500", marginTop: 14 }}>
               Danh sách dịch vụ
             </Text>
-            {listService.length == 0 && 
-              <View style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center"
-              }}> 
+            {listService.length == 0 && (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <Text>Không có dịch vụ</Text>
               </View>
-            }
+            )}
             <FlatList
               style={{ marginTop: 10, paddingHorizontal: 25 }}
               data={listService}
