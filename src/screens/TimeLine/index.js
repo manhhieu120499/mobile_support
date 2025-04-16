@@ -230,7 +230,7 @@ export default function TimeLine({ navigation, route }) {
                   styles.labelInputContentItem,
                   {
                     textAlignVertical: "center",
-                    height: "50%",
+                    height: "35%",
                   },
                 ]}
               >
@@ -345,7 +345,7 @@ export default function TimeLine({ navigation, route }) {
                   width: "100%",
                   flexDirection: "row",
                   justifyContent: "space-between",
-                  height: 80,
+                  height: 60,
                 }}
                 onPress={() => {
                   if (roomSelected != "") {

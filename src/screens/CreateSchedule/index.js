@@ -180,6 +180,8 @@ export default function CreateSchedule({ navigation, route }) {
   const handleTransferScreenRegisterRoom = ({ roomItem }) => {
     navigation.navigate("InfoRoomRegister", {
       infoRoom: roomItem,
+      timeStartChooseRegisterCurrent: timeStart,
+      dayStartChoose: selectedDate,
     });
   };
 

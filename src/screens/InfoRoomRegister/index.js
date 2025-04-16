@@ -97,6 +97,7 @@ export default function InfoRoomRegister({ navigation, route }) {
   } = route?.params?.infoRoom != undefined
     ? route.params.infoRoom
     : { roomId: "", roomName: "", timeStartBeChoose: "" };
+  const { timeStartChooseRegisterCurrent, dayStartChoose } = route?.params;
   const [roomSelected, setRoomSelected] = useState(roomId);
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
@@ -104,7 +105,7 @@ export default function InfoRoomRegister({ navigation, route }) {
   const [timeStart, setTimeStart] = useState(() =>
     timeStartBeChoose != "" ? timeStartBeChoose : findTimeFitToRegisterRoom()
   );
-  const [timeEnd, setTimeEnd] = useState("07:30");
+  const [timeEnd, setTimeEnd] = useState("07:10");
   const [note, setNote] = useState("");
   const [description, setDescription] = useState("");
   const [frequency, setFrequency] = useState("MỘT LẦN");
@@ -191,6 +192,11 @@ export default function InfoRoomRegister({ navigation, route }) {
     return () => clearTimeout(timeOut);
   }, []);
 
+  useEffect(() => {
+    if (!timeStartBeChoose) setTimeStart(timeStartChooseRegisterCurrent);
+    setDayStart(dayStartChoose);
+  }, []);
+
   const fetchServiceData = async () => {
     try {
       const res = await axiosConfig().get("/api/v1/service/getAllServices");
@@ -245,7 +251,7 @@ export default function InfoRoomRegister({ navigation, route }) {
   const handleUpdateTimeEndByTimeStart = (time) => {
     const timesOriginal = renderTime();
     const indexTimeStart = timesOriginal.findIndex((t) => t.time == time);
-    return timesOriginal.slice(indexTimeStart + 1, timesOriginal.length);
+    return timesOriginal.slice(indexTimeStart + 3, timesOriginal.length);
   };
 
   // xử lý render lại giờ kết thúc
@@ -682,7 +688,11 @@ export default function InfoRoomRegister({ navigation, route }) {
               labelOfValue={"time"}
               valueField={"time"}
               nameIcon="punch-clock"
-              isDisable={timeStartBeChoose != "" ? false : isEditTimeEnd}
+              isDisable={
+                timeStartBeChoose != "" || timeStartChooseRegisterCurrent
+                  ? false
+                  : isEditTimeEnd
+              }
             />
           </View>
         </View>

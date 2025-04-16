@@ -76,7 +76,7 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
   } else if (platForm == "android") {
     switch (nameScreen.toLowerCase()) {
       case "inforoomregister": {
-        return 100;
+        return 60;
       }
       case "scheduledeatilroom": {
         return 60;
@@ -88,7 +88,7 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
         return 60;
       }
       case "timeline": {
-        return 90;
+        return 60;
       }
       case "roomdetail": {
         return 90;

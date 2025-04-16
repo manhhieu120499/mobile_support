@@ -6,7 +6,9 @@ const renderTime = () => {
   for (let i = 7; i <= 18; i++) {
     second = i < 10 ? `0${i}` : `${i}`;
     times.push({ time: `${second}:00` });
-    if (i < 18) times.push({ time: `${second}:30` });
+    for (let j = 10; j < 60; j = j + 10) {
+      if (i < 18) times.push({ time: `${second}:${j}` });
+    }
   }
   return times;
 };
@@ -116,7 +118,7 @@ const findTimeFitToRegisterRoom = () => {
         ).toLocaleTimeString()
       ) - transferTimeToMinutes(currentTime.toLocaleTimeString());
     if (index <= renderTime().length - 2) {
-      if (result >= 15) return renderTime()[index].time;
+      if (result >= 10) return renderTime()[index].time;
       else return renderTime()[index + 1].time;
     } else {
       return "0"; // 0 đại diện cho việc quá giờ đặt phòng
