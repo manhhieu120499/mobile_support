@@ -183,8 +183,6 @@ export default function Approve({ navigation, route }) {
 
   useEffect(() => {
     if (dayStart != "") {
-      console.log(dayStart);
-
       setListApproveScheduleFilter((prev) =>
         prev.filter(
           (schedule) =>
@@ -199,7 +197,6 @@ export default function Approve({ navigation, route }) {
       setListApproveScheduleFilter([...listApproveSchedule]);
     } else {
       const inputRegex = new RegExp(debouncedValue, "giu");
-      console.log(inputRegex);
       setListApproveScheduleFilter((prev) =>
         listApproveSchedule.filter(
           (item) =>
@@ -260,6 +257,7 @@ export default function Approve({ navigation, route }) {
           </Pressable>
         </View>
       </Header>
+
       <View style={style.container}>
         <View style={{ width: "100%", flexDirection: "row" }}>
           <View
@@ -305,7 +303,6 @@ export default function Approve({ navigation, route }) {
               </View>
             </View>
 
-            {/** drop box danh sách phòng */}
             <View style={{ width: "50%" }}>
               <DropdownCustom
                 data={[{ name: "1" }, { name: "2" }, { name: "3" }]}
@@ -355,7 +352,7 @@ export default function Approve({ navigation, route }) {
             </TouchableOpacity>
           </View>
         )}
-        {/** line straight */}
+
         <View
           style={{ width: "100%", backgroundColor: "#e7e7e7", height: 1 }}
         />

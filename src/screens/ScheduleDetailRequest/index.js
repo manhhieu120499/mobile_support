@@ -78,8 +78,6 @@ export default function ScheduleDetailRequest({ navigation, route }) {
   const [isOpenModalAttendant, setIsOpenModalAttendant] = useState(false);
   const [isOpenModalDocument, setIsOpenModalDocument] = useState(false);
 
-  console.log("info", route.params.infoScheduleRequest);
-
   useEffect(() => {
     setListService(
       infoScheduleRequest.services.map((item) => {

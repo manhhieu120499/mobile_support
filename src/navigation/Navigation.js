@@ -15,6 +15,7 @@ import {
   TimeLine,
   RoomDetail,
   ScheduleDetailRequest,
+  Login,
 } from "../screens";
 
 import Tabs from "./Tabs";
@@ -25,7 +26,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Tabs"
+        initialRouteName="Login"
         screenOptions={{
           headerShown: false,
         }}
@@ -48,6 +49,7 @@ export default function Navigation() {
           name="ScheduleDetailRequest"
           component={ScheduleDetailRequest}
         />
+        <Stack.Screen name="Login" component={Login} />
       </Stack.Navigator>
     </NavigationContainer>
   );

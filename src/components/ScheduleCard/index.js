@@ -63,7 +63,6 @@ export default function ScheduleCard({
   handleApprovedOrRejectSuccess,
   navigation,
 }) {
-  console.log(scheduleInfo.statusRequestForm);
   const [inputReject, setInputReject] = useState("");
   const [isOpenModalReject, setIsOpenModalReject] = useState(false);
   const handleApproveReservation = async () => {
