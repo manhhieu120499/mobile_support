@@ -26,7 +26,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName="Tabs"
         screenOptions={{
           headerShown: false,
         }}
