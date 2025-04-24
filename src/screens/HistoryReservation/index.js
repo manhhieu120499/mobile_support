@@ -5,14 +5,25 @@ import { axiosConfig } from "../../utilities";
 import ScheduleUserItem from "../../components/ScheduleUserItem";
 
 const HistoryReservation = ({navigation, route}) => {
-    const phone = route.params.phone;
+    const bookerId = route.params.bookerId;
+    console.log(bookerId);
+    
     const [listSchedule,setListSchedule] = useState([]);
     const handleFilterSchedule = async () => {
         try {
-          const res = await axiosConfig().get(
-            `/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${new Date(2024, 0, 1).toISOString()}&dayEnd=${new Date().toISOString()}`
+          const response = await axiosConfig().get(
+            `/api/v1/requestForm/getRequestFormByBookerId?bookerId=${bookerId}`
           );
+
+          const res = {};
           
+          res.data = response.data.map((item) => {
+            return item.reservations[0];
+          })
+
+          console.log(res.data);
+          
+
           const groupDate = [];
           const result = [];
           res.data.sort((a, b) => new Date(a.timeStart) - new Date(b.timeStart));
@@ -33,6 +44,8 @@ const HistoryReservation = ({navigation, route}) => {
               data
             })
           })
+          console.log(result);
+          
           setListSchedule(result)
         } catch (err) {
           console.log(err);

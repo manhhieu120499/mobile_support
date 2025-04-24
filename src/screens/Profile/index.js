@@ -154,6 +154,7 @@ export default function Profile({ navigation, route }) {
                 onPress={() => {
                   navigation.navigate("HistoryReservation", {
                     phone: user.phone,
+                    bookerId: user.employeeId,
                   });
                 }}
                 style={{
