@@ -88,6 +88,13 @@ const formatFrequency = (name) => {
   }
 };
 
+// xử lý cập nhật giờ kết thúc theo giờ bắt đầu
+const handleUpdateTimeEndByTimeStart = (time, distance = 3) => {
+  const timesOriginal = renderTime();
+  const indexTimeStart = timesOriginal.findIndex((t) => t.time == time);
+  return timesOriginal.slice(indexTimeStart + distance, timesOriginal.length);
+};
+
 export default function InfoRoomRegister({ navigation, route }) {
   const {
     roomId,
@@ -97,15 +104,17 @@ export default function InfoRoomRegister({ navigation, route }) {
   } = route?.params?.infoRoom != undefined
     ? route.params.infoRoom
     : { roomId: "", roomName: "", timeStartBeChoose: "" };
-  const { timeStartChooseRegisterCurrent, dayStartChoose } = route?.params;
+  const {
+    timeStartChooseRegisterCurrent,
+    dayStartChoose,
+    timeEndChooseCurrent,
+  } = route?.params;
   const [roomSelected, setRoomSelected] = useState(roomId);
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
   const [titleMeeting, setTitleMeeting] = useState("");
-  const [timeStart, setTimeStart] = useState(() =>
-    timeStartBeChoose != "" ? timeStartBeChoose : findTimeFitToRegisterRoom()
-  );
-  const [timeEnd, setTimeEnd] = useState("07:10");
+  const [timeStart, setTimeStart] = useState(() => findTimeFitToRegisterRoom());
+  const [timeEnd, setTimeEnd] = useState("7:30");
   const [note, setNote] = useState("");
   const [description, setDescription] = useState("");
   const [frequency, setFrequency] = useState("MỘT LẦN");
@@ -116,7 +125,7 @@ export default function InfoRoomRegister({ navigation, route }) {
   const [listSelectedServiceRender, setListSelectedServiceRender] = useState(
     []
   );
-  const [isEditTimeEnd, setIsEditTimeEnd] = useState(true);
+  const [isEditTimeEnd, setIsEditTimeEnd] = useState(false);
   const [timeEndFilterByTimeStart, setTimeEndFilterByTimeStart] = useState(() =>
     renderTime()
   );
@@ -176,25 +185,59 @@ export default function InfoRoomRegister({ navigation, route }) {
   // kiểm tra xem đã quá giờ hay chưa
   useEffect(() => {
     const timeOut = setTimeout(() => {
-      if (timeStart == "18:00" || timeStart == "0") {
-        Alert.alert(
-          "Thông báo",
-          "Đã hết giờ để đặt phòng, vui lòng trở lại vào ngày hôm sau",
-          [
-            {
-              text: "OK",
-              onPress: () => navigation.goBack(""),
-            },
-          ]
-        );
+      if (dayStartChoose == new Date().toISOString().split("T")[0]) {
+        if (timeStart == "18:00" || timeStart == "0") {
+          Alert.alert(
+            "Thông báo",
+            "Đã hết giờ để đặt phòng, vui lòng trở lại vào ngày hôm sau",
+            [
+              {
+                text: "OK",
+                onPress: () => navigation.goBack(""),
+              },
+            ]
+          );
+        }
       }
     }, 0);
     return () => clearTimeout(timeOut);
   }, []);
 
+  // dành cho việc đặt lịch phòng theo ngày (render thời gian)
   useEffect(() => {
-    if (!timeStartBeChoose) setTimeStart(timeStartChooseRegisterCurrent);
-    setDayStart(dayStartChoose);
+    if (timeStartBeChoose != "") {
+      setTimeStart(timeStartBeChoose);
+      setTimeEndFilterByTimeStart(
+        handleUpdateTimeEndByTimeStart(timeStartBeChoose)
+      );
+      setTimeEnd(handleUpdateTimeEndByTimeStart(timeStartBeChoose)[0].time);
+    }
+  }, []);
+
+  // dành cho việc đặt lịch ngay cho phòng
+  useEffect(() => {
+    if (dayStartChoose) {
+      if (dayStartChoose == new Date().toISOString().split("T")[0]) {
+        setTimeStart(findTimeFitToRegisterRoom());
+        setTimeEndFilterByTimeStart((prev) => [
+          ...handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom()),
+        ]);
+        setTimeEnd(
+          handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom())[0].time
+        );
+      } else {
+        setTimeEnd(timeEndChooseCurrent);
+        setTimeEndFilterByTimeStart((prev) => {
+          const indexTimeEnd = renderTime().findIndex(
+            (item) => item.time == timeEndChooseCurrent
+          );
+          return renderTime().slice(indexTimeEnd, renderTime().length);
+        });
+        setTimeStart(timeStartChooseRegisterCurrent);
+      }
+      setDayStart(dayStartChoose);
+      setDayEnd(dayStartChoose);
+    }
   }, []);
 
   const fetchServiceData = async () => {
@@ -214,7 +257,7 @@ export default function InfoRoomRegister({ navigation, route }) {
     try {
       const [res, userJson] = await Promise.all([
         axiosConfig().get("/api/v1/employee/getAllEmployee"),
-        AsyncStorage.getItem("current_user"),
+        AsyncStorage.getItem("userCurrent"),
       ]);
       const user = JSON.parse(userJson);
       const formatData = res.data
@@ -223,7 +266,7 @@ export default function InfoRoomRegister({ navigation, route }) {
           name: emp.employeeName,
           phone: emp.phone,
         }))
-        .filter((emp) => emp.empId != user.employeeId);
+        .filter((emp) => emp.phone != user.phone);
 
       setListParticipant(formatData);
       setBooker(user);
@@ -247,20 +290,13 @@ export default function InfoRoomRegister({ navigation, route }) {
     fetchEmployeeData();
   }, []);
 
-  // xử lý cập nhật giờ kết thúc theo giờ bắt đầu
-  const handleUpdateTimeEndByTimeStart = (time) => {
-    const timesOriginal = renderTime();
-    const indexTimeStart = timesOriginal.findIndex((t) => t.time == time);
-    return timesOriginal.slice(indexTimeStart + 3, timesOriginal.length);
-  };
-
   // xử lý render lại giờ kết thúc
-  useEffect(() => {
-    setTimeEndFilterByTimeStart((prev) => [
-      ...handleUpdateTimeEndByTimeStart(timeStart),
-    ]);
-    setTimeEnd(handleUpdateTimeEndByTimeStart(timeStart)[0].time); // cập nhật time end trong lần đầu tiên khởi tạo
-  }, [timeStart]);
+  // useEffect(() => {
+  //   setTimeEndFilterByTimeStart((prev) => [
+  //     ...handleUpdateTimeEndByTimeStart(timeStart),
+  //   ]);
+  //   setTimeEnd(handleUpdateTimeEndByTimeStart(timeStart)[0].time); // cập nhật time end trong lần đầu tiên khởi tạo
+  // }, [timeStart]);
 
   // xử lý chọn ảnh từ thư viện
   const handleChooseImageFromLibrary = async () => {
@@ -625,7 +661,11 @@ export default function InfoRoomRegister({ navigation, route }) {
                   height: "100%",
                 }}
                 onPress={() => setIsOpenModalDayStart(true)}
-                disabled={route?.params?.infoRoom?.dateSelected ? true : false}
+                disabled={
+                  route?.params?.infoRoom?.dateSelected || dayStartChoose
+                    ? true
+                    : false
+                }
               >
                 <FontAwesomeIcon
                   name="calendar"
@@ -672,7 +712,8 @@ export default function InfoRoomRegister({ navigation, route }) {
               nameIcon="punch-clock"
               isDisable={
                 dayStart == new Date().toISOString().split("T")[0] ||
-                timeStartBeChoose != ""
+                timeStartBeChoose != "" ||
+                timeEndChooseCurrent
               }
             />
           </View>
@@ -688,11 +729,7 @@ export default function InfoRoomRegister({ navigation, route }) {
               labelOfValue={"time"}
               valueField={"time"}
               nameIcon="punch-clock"
-              isDisable={
-                timeStartBeChoose != "" || timeStartChooseRegisterCurrent
-                  ? false
-                  : isEditTimeEnd
-              }
+              isDisable={timeEndChooseCurrent ? true : isEditTimeEnd}
             />
           </View>
         </View>
@@ -957,7 +994,22 @@ export default function InfoRoomRegister({ navigation, route }) {
               value={""}
               handleOnChange={(item) => {
                 const { id, name } = item;
-                setListSelectedServiceRender((prev) => [...prev, { id, name }]);
+                if (
+                  !listSelectedServiceRender.find(
+                    (itemService) => itemService.id == id
+                  )
+                )
+                  setListSelectedServiceRender((prev) => [
+                    ...prev,
+                    { id, name },
+                  ]);
+                else {
+                  Alert.alert(
+                    "Thông báo",
+                    "Dịch vụ này đã thêm vào danh sách!"
+                  );
+                  return;
+                }
               }}
               labelOfValue={"name"}
               valueField={"id"}
@@ -1030,15 +1082,28 @@ export default function InfoRoomRegister({ navigation, route }) {
               handleOnChange={(item) => {
                 if (listSelectedParticipantRender.length <= capacity - 1) {
                   const { empId, name } = item;
-                  setListSelectedParticipantRender((prev) => [
-                    ...prev,
-                    { empId, name },
-                  ]);
+                  if (
+                    !listSelectedParticipantRender.find(
+                      (parItem) => parItem.empId == empId
+                    )
+                  ) {
+                    setListSelectedParticipantRender((prev) => [
+                      ...prev,
+                      { empId, name },
+                    ]);
+                  } else {
+                    Alert.alert(
+                      "Thông báo",
+                      "Người tham gia này đã tồn tại trong danh sách!"
+                    );
+                    return;
+                  }
                 } else {
                   Alert.alert(
                     "Thông báo",
                     "Số lượng người tham gia phải nhỏ hơn hoặc bằng sức chứa của phòng"
                   );
+                  return;
                 }
               }}
               labelOfValue={"name"}

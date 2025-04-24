@@ -47,8 +47,20 @@ const LoginScreen = ({ navigation, route }) => {
         if (res.status == 200) {
           const dataUser = jwtDecode(res.data);
           if (dataUser.role != "ADMIN") {
-            await AsyncStorage.setItem("userCurrent", JSON.stringify(dataUser));
-            navigation.navigate("Tabs");
+            try {
+              const res = await axiosConfig().get(
+                `/api/v1/employee/getEmployeeByPhone?phone=${dataUser.userName}`
+              );
+              if (res.status == 200) {
+                await AsyncStorage.setItem(
+                  "userCurrent",
+                  JSON.stringify(res.data)
+                );
+                navigation.navigate("Tabs");
+              }
+            } catch (err) {
+              console.log(err);
+            }
           } else {
             Alert.alert(
               "Thông báo",

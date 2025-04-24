@@ -2449,6 +2449,7 @@ big-integer@1.6.x:
     expo "~52.0.23"
     expo-camera "^16.0.18"
     expo-checkbox "^4.0.1"
+    expo-image-picker "^16.0.6"
     expo-status-bar "~2.0.0"
     jwt-decode "^4.0.0"
     react "18.3.1"

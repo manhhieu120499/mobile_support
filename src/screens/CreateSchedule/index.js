@@ -13,7 +13,11 @@ import Header from "../../layouts/components/Header";
 import { CardRoom, ModalSideBar } from "../../components";
 import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { renderTime, axiosConfig } from "../../utilities";
+import {
+  renderTime,
+  axiosConfig,
+  findTimeFitToRegisterRoom,
+} from "../../utilities";
 import { useDebounce } from "../../hooks";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TouchableOpacity } from "react-native";
@@ -82,7 +86,9 @@ const calculatorTimeEnd = (timeStart, timeEnd, selectedDate) => {
 
 export default function CreateSchedule({ navigation, route }) {
   const [branchValue, setBranchValue] = useState("TP. Hồ Chí Minh");
-  const [timeStart, setTimeStart] = useState("07:00");
+  const [timeStart, setTimeStart] = useState(() => {
+    return findTimeFitToRegisterRoom();
+  });
   const [capacity, setCapacity] = useState("1");
   const [timeEnd, setTimeEnd] = useState("30 phút");
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -163,18 +169,27 @@ export default function CreateSchedule({ navigation, route }) {
   }, [debounceValue]);
 
   // lưu tạm thông tin userCurrent
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await axiosConfig().get(
-          "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
-        );
-        await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
-      } catch (err) {
-        console.log(err);
-      }
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res = await axiosConfig().get(
+  //         "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
+  //       );
+  //       await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   })();
+  // }, []);
+
+  // tính thời gian timeEnd by duration
+  const handleCalculatorTimeEndByDuration = (timeStart, duration = 30) => {
+    const formatDuration = Number.parseInt(duration) / 10;
+    const indexTimeStart = renderTime().findIndex(
+      (item) => item.time == timeStart
+    );
+    return renderTime()[indexTimeStart + formatDuration].time;
+  };
 
   // xử lý chuyển đến trang đặt phòng
   const handleTransferScreenRegisterRoom = ({ roomItem }) => {
@@ -182,6 +197,10 @@ export default function CreateSchedule({ navigation, route }) {
       infoRoom: roomItem,
       timeStartChooseRegisterCurrent: timeStart,
       dayStartChoose: selectedDate,
+      timeEndChooseCurrent: handleCalculatorTimeEndByDuration(
+        timeStart,
+        timeEnd
+      ),
     });
   };
 

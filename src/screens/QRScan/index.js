@@ -32,7 +32,7 @@ export default function QRScan({ navigation }) {
   const bounceValue = useRef(new Animated.Value(1)).current;
   const [dataQR, setDataQR] = useState("");
   const [isOpenPopup, setIsOpenPopup] = useState({
-    error: true,
+    error: false,
     success: false,
   });
   const [message, setMessage] = useState({
@@ -81,7 +81,7 @@ export default function QRScan({ navigation }) {
   }, []);
 
   const handleCheckInRoom = async (dataQRCode) => {
-    const userJson = await AsyncStorage.getItem("current_user");
+    const userJson = await AsyncStorage.getItem("userCurrent");
     console.log(1);
     const user = JSON.parse(userJson);
     const request = {

@@ -31,7 +31,7 @@ export default function Profile({ navigation, route }) {
   const [user, setUser] = useState({});
   const getUser = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem("current_user");
+      const jsonValue = await AsyncStorage.getItem("userCurrent");
       if (jsonValue != null) {
         const user = JSON.parse(jsonValue);
         setUser(user);

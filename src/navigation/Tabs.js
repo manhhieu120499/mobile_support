@@ -72,9 +72,9 @@ export default function Tabs({ navigation, route }) {
       const data = await AsyncStorage.getItem("userCurrent");
       const userParse = JSON.parse(data);
       setUserCurrent({
-        role: userParse.role,
-        sub: userParse.sub,
-        userName: userParse.userName,
+        role: userParse.account.role,
+        sub: userParse.phone,
+        userName: userParse.employeeName,
       });
     })();
   }, []);

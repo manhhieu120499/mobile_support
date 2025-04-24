@@ -418,7 +418,7 @@ export default function TimeLine({ navigation, route }) {
       </View>
       <Popup
         isOpen={isOpenPopup}
-        title={"Thống báo"}
+        title={"Thông báo"}
         status={"warning"}
         content={"Vui lòng chọn phòng trước khi chọn mốc thời gian"}
         titleButtonAccept={"OK"}
