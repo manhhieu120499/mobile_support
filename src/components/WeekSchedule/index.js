@@ -66,7 +66,7 @@ export default function WeekSchedule({yearFilter, weekFilter, handleWeekFilterOn
                             key={key}
                             onPress={() => {
                                 const days = dayjs(`${yearFilter}-01-01`).startOf("week").add(7 * (Number(week.weekNumber) - 1), "day");
-                                handleWeekFilterOnChange(days.year(), days.month() + 1, days.date())
+                                handleWeekFilterOnChange(days.year(), days.month() + 1, days.date(), days)
                                 closeModalWeekSchedule()
                             }}
                         >

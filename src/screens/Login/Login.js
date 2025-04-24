@@ -44,23 +44,22 @@ const LoginScreen = ({ navigation, route }) => {
           userName: username,
           password: password,
         });
+
         if (res.status == 200) {
           const dataUser = jwtDecode(res.data);
+
           if (dataUser.role != "ADMIN") {
-            try {
-              const res = await axiosConfig().get(
-                `/api/v1/employee/getEmployeeByPhone?phone=${dataUser.userName}`
-              );
-              if (res.status == 200) {
-                await AsyncStorage.setItem(
-                  "userCurrent",
-                  JSON.stringify(res.data)
-                );
-                navigation.navigate("Tabs");
-              }
-            } catch (err) {
-              console.log(err);
-            }
+            await AsyncStorage.setItem("token", res.data);
+            const response = await axiosConfig().get(
+              "/api/v1/employee/getEmployeeByPhone?phone=" + dataUser.userName
+            );
+
+            await AsyncStorage.setItem(
+              "userCurrent",
+              JSON.stringify(response.data)
+            );
+
+            navigation.navigate("Tabs");
           } else {
             Alert.alert(
               "Thông báo",

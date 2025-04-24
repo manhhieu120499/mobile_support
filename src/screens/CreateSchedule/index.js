@@ -168,20 +168,6 @@ export default function CreateSchedule({ navigation, route }) {
     }
   }, [debounceValue]);
 
-  // lưu tạm thông tin userCurrent
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const res = await axiosConfig().get(
-  //         "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
-  //       );
-  //       await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   })();
-  // }, []);
-
   // tính thời gian timeEnd by duration
   const handleCalculatorTimeEndByDuration = (timeStart, duration = 30) => {
     const formatDuration = Number.parseInt(duration) / 10;

@@ -19,6 +19,7 @@ import {
 } from "../screens";
 
 import Tabs from "./Tabs";
+import HistoryReservation from "../screens/HistoryReservation";
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ export default function Navigation() {
           component={ScheduleDetailRequest}
         />
         <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="HistoryReservation" component={HistoryReservation} />
       </Stack.Navigator>
     </NavigationContainer>
   );
