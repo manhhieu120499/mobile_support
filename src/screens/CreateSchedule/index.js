@@ -162,19 +162,19 @@ export default function CreateSchedule({ navigation, route }) {
     }
   }, [debounceValue]);
 
-  // lưu tạm thông tin userCurrent
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await axiosConfig().get(
-          "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
-        );
-        await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
-      } catch (err) {
-        console.log(err);
-      }
-    })();
-  }, []);
+  // // lưu tạm thông tin userCurrent
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res = await axiosConfig().get(
+  //         "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
+  //       );
+  //       await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   })();
+  // }, []);
 
   // xử lý chuyển đến trang đặt phòng
   const handleTransferScreenRegisterRoom = ({ roomItem }) => {

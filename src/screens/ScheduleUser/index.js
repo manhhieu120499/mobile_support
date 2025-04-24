@@ -112,18 +112,6 @@ export default function ScheduleUser({ navigation, route }) {
     setMonthCurrentFilter(dayjs().month() + 1);
     setMonthFilter(dayjs().month() + 1);
     setYearFilter(dayjs().year());
-    // Luu thong tin user
-    (async () => {
-      try {
-        const res = await axiosConfig().get(
-          "/api/v1/employee/getEmployeeByPhone?phone=0914653334"
-        );
-        
-        await AsyncStorage.setItem("current_user", JSON.stringify(res.data));
-      } catch (err) {
-        console.log(err);
-      }
-    })();
   }, [])
   useEffect(() => {
     if(dateFilter) {
@@ -142,7 +130,7 @@ export default function ScheduleUser({ navigation, route }) {
   // Hàm lấy lịch đặt trước
   const handleFilterSchedule = async () => {
     const employee = await getCurrentUser();
-    const phone = employee.phone || "0914653334";
+    const phone = employee.phone;
     let start = null;
     let end = null;
     
