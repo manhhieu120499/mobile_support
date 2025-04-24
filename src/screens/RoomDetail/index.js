@@ -128,6 +128,7 @@ export default function RoomDetail({ navigation, route }) {
                 infoRoom: {
                   roomId: roomItem.roomId,
                   roomName: roomItem.roomName,
+                  capacity: roomItem.capacity,
                 },
               });
             }}
