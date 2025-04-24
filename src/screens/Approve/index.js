@@ -125,7 +125,7 @@ export default function Approve({ navigation, route }) {
   // fetch list approve schedule
   const fetchApproveScheduleData = async (status) => {
     try {
-      const userJson = await AsyncStorage.getItem("current_user");
+      const userJson = await AsyncStorage.getItem("userCurrent");
       const user = JSON.parse(userJson);
       const res = await axiosConfig().get(
         `/api/v1/requestForm/getRequestFormByApproverId?approverId=${user.employeeId}&statusRequestForm=${status}`

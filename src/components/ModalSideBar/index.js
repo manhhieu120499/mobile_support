@@ -11,26 +11,30 @@ import {
   Pressable,
 } from "react-native";
 import DropdownCustom from "../DropdownCustom";
-import { renderTime } from "../../utilities";
+import {
+  axiosConfig,
+  findTimeFitToRegisterRoom,
+  renderTime,
+} from "../../utilities";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import ModalTime from "../ModalTime";
 import ModalCalendar from "../ModalCalendar";
 
 // data branch fake
-const dataBranch = [
-  {
-    id: 1,
-    name: "TP. Hồ Chí Minh",
-  },
-  {
-    id: 2,
-    name: "Hà Nội",
-  },
-  {
-    id: 3,
-    name: "Tây Ninh",
-  },
-];
+// const dataBranch = [
+//   {
+//     id: 1,
+//     name: "TP. Hồ Chí Minh",
+//   },
+//   {
+//     id: 2,
+//     name: "Hà Nội",
+//   },
+//   {
+//     id: 3,
+//     name: "Tây Ninh",
+//   },
+// ];
 
 const renderDurationTimeMeeting = () => {
   const durations = [];
@@ -39,6 +43,26 @@ const renderDurationTimeMeeting = () => {
   }
   return durations;
 };
+
+function getDurationSlots(startTimeStr, endTimeStr) {
+  const durations = [];
+  const maxDuration = 240; // giới hạn tối đa 240 phút
+  const step = 30; // mỗi bước là 30 phút
+
+  const [startHour, startMinute] = startTimeStr.split(":").map(Number);
+  const [endHour, endMinute] = endTimeStr.split(":").map(Number);
+
+  const start = startHour * 60 + startMinute;
+  const end = endHour * 60 + endMinute;
+
+  let totalDuration = Math.min(end - start, maxDuration);
+
+  for (let t = step; t <= totalDuration; t += step) {
+    durations.push({ time: `${t} phút` });
+  }
+
+  return durations;
+}
 
 const style = StyleSheet.create({
   container: {
@@ -82,6 +106,23 @@ export default function ModalSideBar({
 }) {
   const translateX = useRef(new Animated.Value(width)).current;
   const [isOpenModalSelectedDate, setIsOpenModalSelectedDate] = useState(false);
+  const [arrTimeStart, setArrTimeStart] = useState(() => renderTime());
+  const [dataBranch, setDataBranch] = useState([]);
+  const [branchChoose, setBranchChoose] = useState();
+  const [durationChoose, setDurationChoose] = useState(
+    () => renderDurationTimeMeeting()[0]
+  );
+  const [timeStartChoose, setTimeStartChoose] = useState(() => {
+    return renderTime().find(
+      (item) => item.time == timeStartOption.timeStart
+    ) != null
+      ? renderTime().find((item) => item.time == timeStartOption.timeStart)
+      : timeStartOption.timeStart;
+  });
+  const [renderTimeDuration, setRenderTimeDuration] = useState(() =>
+    renderDurationTimeMeeting()
+  );
+
   useEffect(() => {
     Animated.timing(translateX, {
       toValue: isVisible ? 0 : -width, // Trượt vào nếu mở, trượt ra nếu đóng
@@ -89,6 +130,45 @@ export default function ModalSideBar({
       useNativeDriver: true,
     }).start();
   }, [isVisible]);
+
+  // lấy danh sách các chi nhánh
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axiosConfig().get("/api/v1/location/getAllBranch");
+        if (res.status == 200) {
+          const data = res.data.map((item) => ({
+            id: item.branchId,
+            name: item.branchName,
+          }));
+          setDataBranch(data);
+          setBranchChoose(data[0]);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    })();
+  }, []);
+
+  // xử lý thời gian
+  useEffect(() => {
+    // đã qua giờ đăng ký
+    if (findTimeFitToRegisterRoom() == 0) {
+      setArrTimeStart(renderTime());
+      setTimeStartChoose(renderTime()[0]);
+      timeStartOption.setTimeStart(renderTime()[0].time);
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      selectedDateOption.setSelectedDate(tomorrow.toISOString().split("T")[0]);
+    }
+  }, []);
+
+  //xử lý thời lượng họp
+  useEffect(() => {
+    setRenderTimeDuration(getDurationSlots("07:00", "18:00"));
+  }, [timeStartChoose]);
+
   return (
     <Modal transparent={true} visible={isVisible} animationType="none">
       <View style={{ flex: 1 }}>
@@ -101,10 +181,11 @@ export default function ModalSideBar({
               <Text style={style.labelFilter}>Chi nhánh</Text>
               <DropdownCustom
                 data={dataBranch}
-                value={branchOption.branchValue}
-                handleOnChange={(item) =>
-                  branchOption.setBranchValue(item.name)
-                }
+                value={branchChoose}
+                handleOnChange={(item) => {
+                  branchOption.setBranchValue(item.name);
+                  setBranchChoose(item);
+                }}
                 labelOfValue={"name"}
                 valueField={"name"}
                 nameIcon="other-houses"
@@ -142,11 +223,12 @@ export default function ModalSideBar({
             <View style={style.contentItem}>
               <Text style={style.labelFilter}>Thời gian bắt đầu</Text>
               <DropdownCustom
-                data={renderTime()}
-                value={timeStartOption.timeStart}
-                handleOnChange={(item) =>
-                  timeStartOption.setTimeStart(item.time)
-                }
+                data={arrTimeStart}
+                value={timeStartChoose}
+                handleOnChange={(item) => {
+                  timeStartOption.setTimeStart(item.time);
+                  setTimeStartChoose(item);
+                }}
                 labelOfValue={"time"}
                 valueField={"time"}
                 nameIcon="punch-clock"
@@ -155,9 +237,12 @@ export default function ModalSideBar({
             <View style={style.contentItem}>
               <Text style={style.labelFilter}>Thời gian họp</Text>
               <DropdownCustom
-                data={renderDurationTimeMeeting()}
-                value={timeEndOption.timeEnd}
-                handleOnChange={timeEndOption.setTimeEnd}
+                data={renderTimeDuration}
+                value={durationChoose}
+                handleOnChange={(item) => {
+                  timeEndOption.setTimeEnd(item.time);
+                  setDurationChoose(item);
+                }}
                 labelOfValue={"time"}
                 valueField={"time"}
                 nameIcon="punch-clock"
@@ -204,6 +289,23 @@ export default function ModalSideBar({
             isOpenModal={isOpenModalSelectedDate}
             handleOnModal={(selectedDate) => {
               selectedDateOption.setSelectedDate(selectedDate);
+              if (selectedDate != new Date().toISOString().split("T")[0]) {
+                setArrTimeStart(renderTime());
+                setTimeStartChoose(renderTime()[0]);
+                timeStartOption.setTimeStart(renderTime()[0].time);
+              } else {
+                setArrTimeStart((prev) => {
+                  const indexTimeStart = renderTime().findIndex(
+                    (item) => item.time == findTimeFitToRegisterRoom()
+                  );
+                  return renderTime().slice(
+                    indexTimeStart,
+                    renderTime().length
+                  );
+                });
+                setTimeStartChoose(findTimeFitToRegisterRoom());
+                timeStartOption.setTimeStart(findTimeFitToRegisterRoom());
+              }
               setIsOpenModalSelectedDate(false);
             }}
           />
