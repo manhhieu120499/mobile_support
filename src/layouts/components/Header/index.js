@@ -91,10 +91,13 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
         return 60;
       }
       case "roomdetail": {
-        return 90;
+        return 60;
       }
       case "profile": {
-        return 70;
+        return 60;
+      }
+      case "historyreservation": {
+        return 60;
       }
       default: {
         return 120;

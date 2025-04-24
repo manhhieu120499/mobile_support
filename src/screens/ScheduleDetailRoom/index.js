@@ -217,19 +217,6 @@ export default function ScheduleDetailRoom({ navigation, route }) {
                   marginBottom: 5,
                 }}
               >
-                <Text style={styles.title}>Id lịch: </Text>
-                <Text style={styles.info}>
-                  {schedule ? schedule.reservationId : ""}
-                </Text>
-              </View>
-              <View
-                style={{
-                  width: "100%",
-                  flexDirection: "row",
-                  gap: 5,
-                  marginBottom: 5,
-                }}
-              >
                 <Text style={styles.title}>Tên phòng: </Text>
                 <Text style={styles.info}>
                   {schedule ? schedule.room.roomName : ""}
@@ -305,7 +292,11 @@ export default function ScheduleDetailRoom({ navigation, route }) {
               <View style={{ width: "60%", flexDirection: "row" }}>
                 <Text style={styles.title}>Loại phòng: </Text>
                 <Text style={styles.info}>
-                  {schedule ? schedule.room.typeRoom : ""}
+                  {schedule && schedule.room.typeRoom == "DEFAULT"
+                    ? "Mặc định"
+                    : schedule && schedule.room.typeRoom == "VIP"
+                    ? "VIP"
+                    : "Hội nghị"}
                 </Text>
               </View>
               <View style={{ width: "40%", flexDirection: "row" }}>

@@ -77,7 +77,7 @@ export default function Tabs({ navigation, route }) {
         userName: userParse.employeeName,
       });
     })();
-  }, []);
+  }, [userCurrent]);
 
   return (
     <Tab.Navigator
