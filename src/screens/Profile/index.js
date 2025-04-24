@@ -137,7 +137,7 @@ export default function Profile({ navigation, route }) {
             >
               <TouchableOpacity
                 style={{
-                  padding: 10,
+                  padding: 7,
                   backgroundColor: "#3C72DB",
                   borderRadius: 10,
                   marginRight: 10,
