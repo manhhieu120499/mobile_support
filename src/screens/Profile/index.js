@@ -148,7 +148,7 @@ export default function Profile({ navigation, route }) {
               <TouchableOpacity
                 onPress={() => {
                   navigation.navigate("HistoryReservation", {
-                    phone: user.phone,
+                    bookerId: user.employeeId,
                   })
                 }}
                 style={{padding: 10, backgroundColor: "#3C72DB",

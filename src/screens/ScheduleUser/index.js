@@ -97,12 +97,13 @@ export default function ScheduleUser({ navigation, route }) {
     const days = dayjs(`${yearFilter}-${monthFilter}-${dateFilter}`);
     return Number(days.week());
   }
-  const handleWeekFilterOnChange = (year, month, date) => {
+  const handleWeekFilterOnChange = (year, month, date, startOfWeekProp) => {
     const days = dayjs(`${year}-${month}-${date}`);
     setDayFilter(getDayOfWeek(days.day()));
     setDateFilter(days.date());
     setMonthFilter(days.month() + 1);
     setYearFilter(days.year());
+    handleFilterSchedule(startOfWeekProp);
   }
   useEffect(() => {
     setDayFilter(getDayOfWeek(dayjs().day()));
@@ -125,14 +126,23 @@ export default function ScheduleUser({ navigation, route }) {
     }
   }, [dateFilter, monthFilter, yearFilter])
   useEffect(() => {
-    handleFilterSchedule()
+    setDayFilter(getDayOfWeek(dayjs().day()));
+    setDateFilter(dayjs().date());
+    setMonthFilter(dayjs().month() + 1);
+    setYearFilter(dayjs().year());
+    const days = dayjs(`${dayjs().year()}-01-01`).startOf("week").add(7 * (dayjs().week() - 1), "day");
+    handleFilterSchedule(days)
   }, [valueFilter])
   // Hàm lấy lịch đặt trước
-  const handleFilterSchedule = async () => {
+  const handleFilterSchedule = async (
+    startOfWeek
+  ) => {
     const employee = await getCurrentUser();
     const phone = employee.phone;
+    
     let start = null;
     let end = null;
+    
     
     try {
       if(valueFilter === "Ngày") {
@@ -141,6 +151,7 @@ export default function ScheduleUser({ navigation, route }) {
       } else if (valueFilter === "Tuần") {
         start = new Date(startOfWeek.year(), startOfWeek.month(), startOfWeek.date(), 0, 0, 0);
         const endOfWeek = startOfWeek.add(7, "day");
+        
         end = new Date(endOfWeek.year(), endOfWeek.month(), endOfWeek.date(), 0, 0, 0);
       } else if (valueFilter === "Tháng") {
         
@@ -153,7 +164,7 @@ export default function ScheduleUser({ navigation, route }) {
         end = new Date(daysInMonthEnd.year(), daysInMonthEnd.month(), daysInMonthEnd.date(), 0, 0, 0);
       }
       
-      console.log(`/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${start.toISOString()}&dayEnd=${end.toISOString()}`);
+      // console.log(`/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${start.toISOString()}&dayEnd=${end.toISOString()}`);
       
       const res = await axiosConfig().get(
         `/api/v1/reservation/getAllReservationByBooker?phone=${phone}&dayStart=${start.toISOString()}&dayEnd=${end.toISOString()}`
@@ -179,6 +190,7 @@ export default function ScheduleUser({ navigation, route }) {
           data
         })
       })
+      
       setListSchedule(result)
     } catch (err) {
       console.log(err);
@@ -187,12 +199,12 @@ export default function ScheduleUser({ navigation, route }) {
   // Láy thông tin user
   const getCurrentUser = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem("current_user");
+      const jsonValue = await AsyncStorage.getItem("userCurrent");
+      
       if (jsonValue != null) {
         const user = JSON.parse(jsonValue);
         return user;
       }
-      return null;
     } catch (e) {
       console.error("Lỗi khi lấy current_user từ AsyncStorage", e);
       return null;
@@ -229,6 +241,29 @@ export default function ScheduleUser({ navigation, route }) {
             setShowWeekSchedule={setShowWeekSchedule}
           />
         </View>
+        
+        {showWeekSchedule && <View style={{flexDirection: 'row', justifyContent: 'space-between', paddingTop: 0, padding: 12 }}>
+            {weekDays.map((day, index) => (
+              <TouchableOpacity 
+                style={[{backgroundColor: "white", borderRadius: 5,
+                  alignItems: "center",
+                  width: `${100 / 8}%`,
+                  paddingVertical: 10,
+                  
+                }, weekDays.length != index && {marginRight: `${100 / 8 / 6 }%`}]} key={index}
+              >
+                <Text  style={[{ width: 40, textAlign: 'center'},
+                    day === "Th 7" || day === "CN" ? {color: "red"} : {}
+                ]}>
+                    {day}
+                </Text>
+                <Text style={{marginTop: 5, fontSize: 16, fontWeight: 600}}>
+                  {startOfWeek?.add(index, "day").format("DD")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>}
+
         <ScrollView style={{flex: 1, backgroundColor:"#D6D6D6"}}>
           {showMonthSchedule && 
             <View style={{
@@ -275,25 +310,6 @@ export default function ScheduleUser({ navigation, route }) {
               />
             </View>
           }
-          {showWeekSchedule && <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 0, padding: 12 }}>
-            {weekDays.map((day, index) => (
-              <TouchableOpacity style={[{backgroundColor: "white", borderRadius: 5,
-                alignItems: "center",
-                width: `${100 / 8}%`,
-                paddingVertical: 10,
-                
-              }, weekDays.length != index && {marginRight: `${100 / 8 / 6 }%`}]} key={index}>
-                <Text  style={[{ width: 40, textAlign: 'center'},
-                    day === "Th 7" || day === "CN" ? {color: "red"} : {}
-                ]}>
-                    {day}
-                </Text>
-                <Text style={{marginTop: 5, fontSize: 16, fontWeight: 600}}>
-                  {startOfWeek?.add(index, "day").format("DD")}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>}
           <View style={{
             flex: 1,
             backgroundColor: "white",
