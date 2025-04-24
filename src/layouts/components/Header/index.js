@@ -97,7 +97,7 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
         return 70;
       }
       default: {
-        return 60;
+        return 120;
       }
     }
   }
