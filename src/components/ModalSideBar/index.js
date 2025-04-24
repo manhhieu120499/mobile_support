@@ -106,7 +106,9 @@ export default function ModalSideBar({
 }) {
   const translateX = useRef(new Animated.Value(width)).current;
   const [isOpenModalSelectedDate, setIsOpenModalSelectedDate] = useState(false);
-  const [arrTimeStart, setArrTimeStart] = useState(() => renderTime());
+  const [arrTimeStart, setArrTimeStart] = useState(() =>
+    renderTime().slice(0, renderTime().length - 3)
+  );
   const [dataBranch, setDataBranch] = useState([]);
   const [branchChoose, setBranchChoose] = useState();
   const [durationChoose, setDurationChoose] = useState(
@@ -117,7 +119,7 @@ export default function ModalSideBar({
       (item) => item.time == timeStartOption.timeStart
     ) != null
       ? renderTime().find((item) => item.time == timeStartOption.timeStart)
-      : timeStartOption.timeStart;
+      : { time: "07:00" };
   });
   const [renderTimeDuration, setRenderTimeDuration] = useState(() =>
     renderDurationTimeMeeting()
@@ -154,7 +156,7 @@ export default function ModalSideBar({
   useEffect(() => {
     // đã qua giờ đăng ký
     if (findTimeFitToRegisterRoom() == 0) {
-      setArrTimeStart(renderTime());
+      setArrTimeStart(renderTime().slice(0, renderTime().length - 3));
       setTimeStartChoose(renderTime()[0]);
       timeStartOption.setTimeStart(renderTime()[0].time);
       const today = new Date();
@@ -166,7 +168,7 @@ export default function ModalSideBar({
 
   //xử lý thời lượng họp
   useEffect(() => {
-    setRenderTimeDuration(getDurationSlots("07:00", "18:00"));
+    setRenderTimeDuration(getDurationSlots(timeStartChoose.time, "18:00"));
   }, [timeStartChoose]);
 
   return (
