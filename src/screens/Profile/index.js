@@ -29,17 +29,29 @@ export default function Profile({ navigation, route }) {
   const [modalPassword, setModalPassword] = useState(false);
   const [modalHistory, setModalHistory] = useState(false);
   const [user, setUser] = useState({});
+  const [token, setToken] = useState("")
   const getUser = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem("current_user");
+      const jsonValue = await AsyncStorage.getItem("userCurrent");
+      const token = await AsyncStorage.getItem("token");
+      
       if (jsonValue != null) {
         const user = JSON.parse(jsonValue);
+        console.log(user);
         setUser(user);
+      }
+      if(token != null) {
+        setToken(token);
       }
     } catch (error) {
       console.error("Error reading user:", error);
     }
   };
+
+  const handleUpdateProfile = async (user) => {
+    await AsyncStorage.setItem("userCurrent", JSON.stringify(user));
+    setUser(user);
+  }
 
   useEffect(
     () => {
@@ -99,7 +111,13 @@ export default function Profile({ navigation, route }) {
               </View>
             </View>
             <View style={{flexDirection: "row", justifyContent: "flex-end", marginTop: 10}}>
-              <TouchableOpacity style={{padding: 10, backgroundColor: "#3C72DB",
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate("HistoryReservation", {
+                    phone: user.phone,
+                  })
+                }}
+                style={{padding: 10, backgroundColor: "#3C72DB",
                 borderRadius: 10, marginRight: 10
               }}><Text style={{textAlign: "center"}}>Lịch sử đặt phòng</Text></TouchableOpacity>
               <TouchableOpacity style={{padding: 10, backgroundColor: "yellow",
@@ -115,10 +133,10 @@ export default function Profile({ navigation, route }) {
         </View>
       </View>
       <ModalCenter isOpenModal={modalUpdate} closeModal={() => {setModalUpdate(false)}}>
-        <ModelUpdateProfile data={user} closeModal={() => {setModalUpdate(false)}} />
+        <ModelUpdateProfile data={user} handleUpdateProfile={handleUpdateProfile} closeModal={() => {setModalUpdate(false)}} />
       </ModalCenter>
       <ModalCenter isOpenModal={modalPassword} closeModal={() => {setModalPassword(false)}}>
-        <ModalChangePasswordProfile data={user} closeModal={() => {setModalPassword(false)}} />
+        <ModalChangePasswordProfile token={token} userName={user.phone} data={user} closeModal={() => {setModalPassword(false)}} />
       </ModalCenter>
     </DefaultLayout>
   );

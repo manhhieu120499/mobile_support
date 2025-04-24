@@ -3,26 +3,14 @@ import { Platform } from "react-native";
 import { TouchableOpacity } from "react-native";
 import { Image, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { axiosConfig } from "../../utilities";
 
-export default function ModelUpdateProfile({closeModal, data}) {
+export default function ModelUpdateProfile({closeModal, data, handleUpdateProfile}) {
 
     const [userName, setUserName] = useState(data.employeeName);
     const [email, setEmail] = useState(data.email);
-    const [avt, setAvt] = useState(data.avatar);
-
-    // Yêu cầu quyền truy cập thư viện
-    // useEffect(() => {
-    //     (async () => {
-    //       if (Platform.OS !== "web") {
-    //         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    //         if (status !== "granted") {
-    //           alert("Bạn cần cấp quyền truy cập thư viện ảnh!");
-    //         } else {
-    //           console.log("✅ Đã được cấp quyền truy cập ảnh");
-    //         }
-    //       }
-    //     })();
-    //   }, []);
+    const [avt, setAvt] = useState(null);
+    const [avtBase64, setAvtBase64] = useState(null);
 
     const handleChooseImageFromLibrary = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -30,17 +18,63 @@ export default function ModelUpdateProfile({closeModal, data}) {
           allowsEditing: true,
           aspect: [4, 3],
           quality: 1,
+          base64: true,
         });
+        
     
         if (!result.canceled) {
           console.log(result.assets[0].uri);
-          setAvt((prev) => [...prev, { file: result.assets[0].uri }]);
+          setAvt(result.assets[0].uri);
+          setAvtBase64(result.assets[0].base64)
         }
-      };
+    };
 
-    const handleSubmit = () => {
-        console.log(userName);
-        console.log(email);
+    const handleUploadToCloudinary = async (base64Image) => {
+        const formData = new FormData();
+        formData.append("file", `data:image/jpeg;base64,${base64Image}`);
+        formData.append("upload_preset", "picture");
+      
+        try {
+          const response = await fetch("https://api.cloudinary.com/v1_1/drfbxuss6/image/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          return data.secure_url;
+        } catch (error) {
+          console.error("Upload failed:", error);
+        }
+    };
+      
+
+    const handleSubmit = async () => {
+        let avtUpload;
+        
+        if(avt) {
+            avtUpload = await handleUploadToCloudinary(avtBase64);
+        } else {avtUpload = ""};
+        try{
+            const responseUpdate = await axiosConfig().put(
+                "/api/v1/employee/upDateEmployee",
+                {
+                    employeeId: data.employeeId,
+                    phone: data.phone,
+                    email: email,
+                    employeeName: userName,
+                    departmentId: data.department.departmentId,
+                    role: data.account.role,
+                    avatar: avtUpload
+                }
+            )
+            data.employeeName = responseUpdate.data.employeeName;
+            data.email = responseUpdate.data.email;
+            data.avatar = responseUpdate.data.avatar;
+            handleUpdateProfile(data);
+            closeModal();
+        } catch(e) {
+            console.log(e);
+            
+        }
         
     }
 
@@ -63,7 +97,7 @@ export default function ModelUpdateProfile({closeModal, data}) {
                             borderStyle: "solid",
                             borderColor: "rgba(0,0,0,0.2)",
                             borderWidth: 1
-                        }} source={{uri: data.avatar}} />
+                        }} source={{uri: avt || data.avatar}} />
                     </TouchableOpacity>
                     <Text style={{fontSize: 18, fontWeight: "bold", marginTop: 15}}>Ảnh đại diện</Text>
                 </View>
