@@ -10,12 +10,22 @@ import {
 import { Button, Card, IconButton } from "react-native-paper";
 import { DefaultLayout } from "../../layouts";
 import Header from "../../layouts/components/Header";
-import { axiosConfig, formatPrice } from "../../utilities";
+import {
+  axiosConfig,
+  findTimeFitToRegisterRoom,
+  formatPrice,
+} from "../../utilities";
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#E0F2F1", padding: 10 },
   card: { borderRadius: 10, padding: 10, backgroundColor: "white" },
-  image: { width: "100%", height: 200, borderRadius: 10, borderWidth: 1, borderColor: "#ddd" },
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
   infoContainer: { padding: 10 },
   title: { fontSize: 20, fontWeight: "bold", marginBottom: 5 },
   text: { fontSize: 14.5, marginBottom: 2 },
@@ -45,6 +55,8 @@ const styles = StyleSheet.create({
 export default function RoomDetail({ navigation, route }) {
   const { room: roomItem } = route?.params;
   const [listDevice, setListDevice] = useState([]);
+
+  console.log(roomItem);
 
   useEffect(() => {
     (async function () {
@@ -143,6 +155,8 @@ export default function RoomDetail({ navigation, route }) {
                   roomName: roomItem.roomName,
                   capacity: roomItem.capacity,
                 },
+                statusCheckTime:
+                  findTimeFitToRegisterRoom() == 0 ? true : false,
               });
             }}
           >

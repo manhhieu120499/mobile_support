@@ -109,6 +109,10 @@ export default function InfoRoomRegister({ navigation, route }) {
     dayStartChoose,
     timeEndChooseCurrent,
   } = route?.params;
+
+  // params ở trang room detail
+  const { statusCheckTime = null } = route?.params;
+
   const [roomSelected, setRoomSelected] = useState(roomId);
   const [booker, setBooker] = useState({});
   const [listServices, setListService] = useState([]);
@@ -182,6 +186,11 @@ export default function InfoRoomRegister({ navigation, route }) {
   // state duplicated schedule
   const [listDuplicatedSchedule, setListDuplicatedSchedule] = useState([]);
 
+  // state render time start for register room in view detail
+  const [arrTimeStartRender, setArrTimeStartRender] = useState(() => {
+    return renderTime().slice(0, renderTime().length - 3);
+  });
+
   // kiểm tra xem đã quá giờ hay chưa
   useEffect(() => {
     const timeOut = setTimeout(() => {
@@ -211,6 +220,34 @@ export default function InfoRoomRegister({ navigation, route }) {
         handleUpdateTimeEndByTimeStart(timeStartBeChoose)
       );
       setTimeEnd(handleUpdateTimeEndByTimeStart(timeStartBeChoose)[0].time);
+    } else {
+      if (statusCheckTime != null) {
+        if (statusCheckTime) {
+          const today = new Date();
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          setDayStart(tomorrow.toISOString().split("T")[0]);
+          setDayEnd(tomorrow.toISOString().split("T")[0]);
+          setTimeStart("07:00");
+          setTimeEndFilterByTimeStart(handleUpdateTimeEndByTimeStart("07:00"));
+          setTimeEnd(handleUpdateTimeEndByTimeStart("07:00")[0].time);
+        } else {
+          // nếu là ngày hiện tại
+          const indexTimeStart = renderTime().findIndex(
+            (item) => item.time == findTimeFitToRegisterRoom()
+          );
+          setTimeStart(findTimeFitToRegisterRoom());
+          setArrTimeStartRender(
+            renderTime().slice(indexTimeStart, renderTime().length - 3)
+          );
+          setTimeEndFilterByTimeStart(
+            handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom())
+          );
+          setTimeEnd(
+            handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom())[0].time
+          );
+        }
+      }
     }
   }, []);
 
@@ -473,10 +510,18 @@ export default function InfoRoomRegister({ navigation, route }) {
   const handleDayOnModalDayStart = (selectedDate) => {
     setDayStart(selectedDate);
     if (formatFrequency(frequency) == "ONE_TIME") setDayEnd(selectedDate);
-    if (selectedDate != new Date().toISOString().split("T")[0])
+    if (selectedDate != new Date().toISOString().split("T")[0]) {
       setTimeStart("07:00");
-    else {
+      setTimeEndFilterByTimeStart(handleUpdateTimeEndByTimeStart("07:00"));
+      setTimeEnd(handleUpdateTimeEndByTimeStart("07:00")[0].time);
+    } else {
       setTimeStart(findTimeFitToRegisterRoom());
+      setTimeEndFilterByTimeStart(
+        handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom())
+      );
+      setTimeEnd(
+        handleUpdateTimeEndByTimeStart(findTimeFitToRegisterRoom())[0].time
+      );
     }
     setIsOpenModalDayStart(false);
   };
@@ -701,10 +746,14 @@ export default function InfoRoomRegister({ navigation, route }) {
             <Text style={style.labelInputContentItem}>Giờ bắt đầu</Text>
 
             <DropdownCustom
-              data={renderTime().slice(0, renderTime().length - 1)}
+              data={arrTimeStartRender}
               value={timeStart}
               handleOnChange={(item) => {
                 setTimeStart(item.time);
+                setTimeEndFilterByTimeStart(
+                  handleUpdateTimeEndByTimeStart(item.time)
+                );
+                setTimeEnd(handleUpdateTimeEndByTimeStart(item.time)[0].time);
                 setIsEditTimeEnd(false);
               }}
               labelOfValue={"time"}
