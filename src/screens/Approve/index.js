@@ -140,6 +140,12 @@ export default function Approve({ navigation, route }) {
           .sort((a, b) => new Date(a.timeResponse) - new Date(b.timeResponse))
           .reverse();
       }
+      if (filterRoom !== "" && filterRoom !== "Tất cả") {
+        const arrScheduleFilterByRoom = arrSortByTime.filter(
+          (item) => item.reservations[0].room.roomName == filterRoom
+        );
+        arrSortByTime = [...arrScheduleFilterByRoom];
+      }
       setListApproveSchedule(arrSortByTime);
       setListApproveScheduleFilter(arrSortByTime);
     } catch (err) {
@@ -150,7 +156,18 @@ export default function Approve({ navigation, route }) {
   const fetchRoomData = async () => {
     try {
       // lấy api danh sách phòng phê duyệt
-      const res = await axiosConfig().get();
+      const userJson = await AsyncStorage.getItem("userCurrent");
+      const user = JSON.parse(userJson);
+      const res = await axiosConfig().get(
+        `/api/v1/room/getRoomByApprover?EmployeeId=${user.employeeId}`
+      );
+      if (res.status == 200) {
+        const roomDataFormat = res.data.map((item) => ({
+          roomId: item.roomId,
+          name: item.roomName,
+        }));
+        setListRoomData([{ roomId: -1, name: "Tất cả" }, ...roomDataFormat]);
+      }
     } catch (err) {
       console.log(err);
     }
@@ -158,6 +175,7 @@ export default function Approve({ navigation, route }) {
 
   useEffect(() => {
     fetchApproveScheduleData("PENDING");
+    fetchRoomData();
   }, []);
 
   useEffect(() => {
@@ -179,6 +197,22 @@ export default function Approve({ navigation, route }) {
 
   useEffect(() => {
     // room thay đổi thì load lại danh sách phòng rồi cập nhật vào trong list filterSchedule
+    if (filterRoom !== "") {
+      const ScheduleCopy = [...listApproveSchedule];
+      if (filterRoom == "Tất cả") {
+        const obj = {
+          "Đang chờ": "PENDING",
+          "Đã phê duyệt": "APPROVED",
+          "Đã từ chối": "REJECTED",
+        };
+        fetchApproveScheduleData(obj[filterSchedule]);
+      } else {
+        const newScheduleFilter = ScheduleCopy.filter(
+          (item) => item.reservations[0].room.roomName == filterRoom
+        );
+        setListApproveScheduleFilter(newScheduleFilter);
+      }
+    }
   }, [filterRoom]);
 
   useEffect(() => {
@@ -230,6 +264,7 @@ export default function Approve({ navigation, route }) {
           status: "success",
         });
         setListApproveScheduleFilter((prev) => []);
+        setIsCheckAll(false);
       }
     } catch (err) {
       setMessage({
@@ -305,13 +340,14 @@ export default function Approve({ navigation, route }) {
 
             <View style={{ width: "50%" }}>
               <DropdownCustom
-                data={[{ name: "1" }, { name: "2" }, { name: "3" }]}
-                value={""}
+                data={listRoomData}
+                value={filterRoom}
                 labelOfValue={"name"}
                 valueField={"name"}
-                handleOnChange={(item) => setFilterSchedule(item.name)}
+                handleOnChange={(item) => setFilterRoom(item.name)}
                 isVisibleSearch={false}
                 nameIcon="filter-alt"
+                placeholder={"Tất cả"}
               />
             </View>
           </View>
@@ -412,26 +448,39 @@ export default function Approve({ navigation, route }) {
           marginTop: 10,
         }}
       >
-        <FlatList
-          data={listApproveScheduleFilter}
-          contentContainerStyle={{
-            paddingBottom: 50,
-          }}
-          renderItem={({ item }) => {
-            return (
-              <ScheduleCard
-                scheduleInfo={item}
-                isChecked={isCheckAll}
-                setLoading={setIslLoading}
-                setMessage={setMessage}
-                setOpenModalNotification={setIsOpenModalNotification}
-                handleApprovedOrRejectSuccess={handleApprovedOrRejectSuccess}
-                navigation={navigation}
-              />
-            );
-          }}
-          keyExtractor={(item) => item.requestFormId.toString()}
-        />
+        {listApproveScheduleFilter.length > 0 ? (
+          <FlatList
+            data={listApproveScheduleFilter}
+            contentContainerStyle={{
+              paddingBottom: 50,
+            }}
+            renderItem={({ item }) => {
+              return (
+                <ScheduleCard
+                  scheduleInfo={item}
+                  isChecked={isCheckAll}
+                  setLoading={setIslLoading}
+                  setMessage={setMessage}
+                  setOpenModalNotification={setIsOpenModalNotification}
+                  handleApprovedOrRejectSuccess={handleApprovedOrRejectSuccess}
+                  navigation={navigation}
+                />
+              );
+            }}
+            keyExtractor={(item) => item.requestFormId.toString()}
+          />
+        ) : (
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "500",
+              textAlign: "center",
+              marginTop: 40,
+            }}
+          >
+            Không có lịch
+          </Text>
+        )}
       </View>
 
       {/** Modal choose day start */}

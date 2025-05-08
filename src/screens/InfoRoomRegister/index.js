@@ -512,6 +512,7 @@ export default function InfoRoomRegister({ navigation, route }) {
     if (formatFrequency(frequency) == "ONE_TIME") setDayEnd(selectedDate);
     if (selectedDate != new Date().toISOString().split("T")[0]) {
       setTimeStart("07:00");
+      setArrTimeStartRender(renderTime().slice(0, renderTime().length - 3));
       setTimeEndFilterByTimeStart(handleUpdateTimeEndByTimeStart("07:00"));
       setTimeEnd(handleUpdateTimeEndByTimeStart("07:00")[0].time);
     } else {
