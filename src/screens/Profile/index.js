@@ -10,6 +10,7 @@ import ModalCenter from "../../components/ModalCenter";
 import ModelUpdateProfile from "../../components/ModelUpdateProfile";
 import ModalChangePasswordProfile from "../../components/ModelChangePasswordProfile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { deactivateSocket } from "../../utilities/socketInstance";
 
 const style = StyleSheet.create({
   container: {
@@ -53,6 +54,7 @@ export default function Profile({ navigation, route }) {
   }
   const handleLogout = async () => {
     await AsyncStorage.removeItem("userCurrent");
+    deactivateSocket();
     navigation.navigate("Login");
   }
 

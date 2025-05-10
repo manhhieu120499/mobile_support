@@ -1,8 +1,14 @@
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Platform, Pressable } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { View, Text, StyleSheet } from "react-native";
 import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useDispatch, useSelector } from "react-redux";
+import { axiosConfig } from "../../../utilities";
+import { updateNumber } from "../../../slice/NotificationSlice";
 
 const styles = StyleSheet.create({
   container: {
@@ -110,7 +116,24 @@ export default function Header({
   handleOnPressRightIcon,
   handleOnPressLeftIcon,
   nameScreen = "",
+  switchPageNotification
 }) {
+
+  const getEmployeeId = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem("userCurrent");
+      
+      if (jsonValue != null) {
+        const user = JSON.parse(jsonValue);
+        return user.employeeId;
+      }
+    } catch (error) {
+      console.error("Error reading user:", error);
+    }
+  };
+
+  const number = useSelector(state => state.notification.number);
+
   return (
     <View
       style={[
@@ -140,7 +163,25 @@ export default function Header({
         <Text style={styles.title}>Đặt lịch họp trực tuyến</Text>
         {rightIcon && (
           <Pressable style={styles.iconRightInContainerTitle}>
-            <FontAwesome6Icon name={rightIcon} size={24} color={"white"} />
+            <TouchableOpacity onPress={ async () => {
+              switchPageNotification();
+            }}>
+              {number > 0 && <View style={{
+                backgroundColor: "red",
+                borderRadius: 11,
+                height: 22,
+                width: 22,
+                justifyContent: "center",
+                alignItems: "center",
+                position: "absolute",
+                top: -10,
+                right: -10,
+                zIndex: 1000
+              }}>
+                <Text style={{color: "white", fontWeight: "bold", fontSize: 13}}>{number}</Text>  
+              </View>}
+              <FontAwesome6Icon name={rightIcon} size={26} color={"white"} />
+            </TouchableOpacity>
           </Pressable>
         )}
       </View>

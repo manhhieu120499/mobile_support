@@ -14,8 +14,13 @@ import FontAwesome6Icon from "react-native-vector-icons/FontAwesome6";
 import { axiosConfig } from "../../utilities";
 import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch } from "react-redux";
+import { setNotification, updateNumber } from "../../slice/NotificationSlice";
+import { setupSocket } from "../../utilities/socketSetup";
+import { setStompClient } from "../../utilities/socketInstance";
 
 const LoginScreen = ({ navigation, route }) => {
+  const dispatch = useDispatch()
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -53,8 +58,20 @@ const LoginScreen = ({ navigation, route }) => {
             const response = await axiosConfig().get(
               "/api/v1/employee/getEmployeeByPhone?phone=" + dataUser.userName
             );
+            const user = JSON.stringify(response.data);
             
-            await AsyncStorage.setItem("userCurrent", JSON.stringify(response.data));
+            await AsyncStorage.setItem("userCurrent", user);
+            
+            const resGetNotification = await axiosConfig().get(
+              `/api/v1/notification/getAllNotification?employeeId=${response.data.employeeId}`
+            );
+
+            const unreadCount = resGetNotification.data.filter(item => !item.read).length;
+            dispatch(setNotification(resGetNotification.data));
+            dispatch(updateNumber(unreadCount));
+            
+            const client = setupSocket(response.data.employeeId, dispatch);
+            setStompClient(client);
             
             navigation.navigate("Tabs");
           } else {
@@ -67,7 +84,7 @@ const LoginScreen = ({ navigation, route }) => {
         }
       } catch (err) {
         Alert.alert("Thông báo", `Đăng nhập không thành công\n${err}`);
-        console.log(err);
+        console.log(err.message);
       }
     }
   };

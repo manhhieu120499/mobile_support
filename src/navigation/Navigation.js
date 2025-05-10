@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -20,6 +20,7 @@ import {
 
 import Tabs from "./Tabs";
 import HistoryReservation from "../screens/HistoryReservation";
+import Notification from "../screens/Notification/Notification";
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ export default function Navigation() {
         />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="HistoryReservation" component={HistoryReservation} />
+        <Stack.Screen name="Notification" component={Notification} />
       </Stack.Navigator>
     </NavigationContainer>
   );
