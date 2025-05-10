@@ -10,15 +10,25 @@ import {
 import { Button, Card, IconButton } from "react-native-paper";
 import { DefaultLayout } from "../../layouts";
 import Header from "../../layouts/components/Header";
-import { axiosConfig, formatPrice } from "../../utilities";
+import {
+  axiosConfig,
+  findTimeFitToRegisterRoom,
+  formatPrice,
+} from "../../utilities";
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#E0F2F1", padding: 10 },
   card: { borderRadius: 10, padding: 10, backgroundColor: "white" },
-  image: { width: "100%", height: 200, borderRadius: 10 },
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
   infoContainer: { padding: 10 },
   title: { fontSize: 20, fontWeight: "bold", marginBottom: 5 },
-  text: { fontSize: 16, marginBottom: 2 },
+  text: { fontSize: 14.5, marginBottom: 2 },
   bold: { fontWeight: "bold" },
   button: { backgroundColor: "#007AFF" },
   equipmentContainer: {
@@ -26,23 +36,27 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "white",
     borderRadius: 10,
-    height: 300,
+    height: 210,
   },
   subTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 5 },
   listItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 5,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    height: 30,
   },
-  equipmentText: { fontSize: 16 },
-  equipmentQuantity: { fontSize: 16, fontWeight: "bold" },
+  equipmentText: { fontSize: 14.5 },
+  equipmentQuantity: { fontSize: 14.5, fontWeight: "bold" },
 });
 
 export default function RoomDetail({ navigation, route }) {
   const { room: roomItem } = route?.params;
   const [listDevice, setListDevice] = useState([]);
+
+  console.log(roomItem);
 
   useEffect(() => {
     (async function () {
@@ -90,16 +104,21 @@ export default function RoomDetail({ navigation, route }) {
                 người
               </Text>
               <Text style={[styles.text, { width: "50%" }]}>
-                <Text style={styles.bold}>Loại phòng:</Text> {roomItem.typeRoom}
+                <Text style={styles.bold}>Loại phòng:</Text>{" "}
+                {roomItem.typeRoom == "DEFAULT"
+                  ? "Mặc định"
+                  : roomItem.typeRoom == "VIP"
+                  ? "VIP"
+                  : "Hội nghị"}
               </Text>
             </View>
             <Text style={styles.text}>
               <Text style={styles.bold}>Người phê duyệt:</Text>{" "}
-              {roomItem.approver.employeeName}
+              {roomItem.approver ? roomItem.approver.employeeName : "Chưa có"}
             </Text>
             <Text style={[styles.text, { marginVertical: 4 }]}>
               <Text style={styles.bold}>Số điện thoại:</Text>{" "}
-              {roomItem.approver.phone}
+              {roomItem.approver ? roomItem.approver.phone : "Chưa có"}
             </Text>
             <View
               style={{
@@ -116,7 +135,13 @@ export default function RoomDetail({ navigation, route }) {
               </Text>
               <Text style={[styles.text, { width: "55%" }]}>
                 <Text style={styles.bold}>Trạng thái:</Text>{" "}
-                {roomItem.statusRoom}
+                {roomItem.statusRoom == "AVAILABLE"
+                  ? "Có sẵn"
+                  : roomItem.statusRoom == "MAINTAIN"
+                  ? "Bảo trì"
+                  : roomItem.statusRoom == "REPAIR"
+                  ? "Sửa chữa"
+                  : "Đang sử dụng"}
               </Text>
             </View>
           </View>
@@ -128,7 +153,10 @@ export default function RoomDetail({ navigation, route }) {
                 infoRoom: {
                   roomId: roomItem.roomId,
                   roomName: roomItem.roomName,
+                  capacity: roomItem.capacity,
                 },
+                statusCheckTime:
+                  findTimeFitToRegisterRoom() == 0 ? true : false,
               });
             }}
           >
@@ -148,7 +176,6 @@ export default function RoomDetail({ navigation, route }) {
                   <Text style={styles.equipmentQuantity}>{item.quantity}</Text>
                 </View>
               )}
-              scrollEnabled={true}
               showsVerticalScrollIndicator={false}
             />
           )}

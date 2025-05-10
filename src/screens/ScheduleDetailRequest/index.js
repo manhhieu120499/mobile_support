@@ -22,6 +22,13 @@ import {
   formatUTC7,
 } from "../../utilities";
 
+const statusReservation = {
+  PENDING: "Chờ duyệt",
+  WAITING: "Chờ nhận phòng",
+  COMPLETED: "Đã hoàn thành",
+  NOT_CHECKED_IN: "Không nhận phòng"
+}
+
 const styles = StyleSheet.create({
   container: { width: "100%", padding: 10, backgroundColor: "white" },
   cardHeader: {
@@ -128,7 +135,7 @@ export default function ScheduleDetailRequest({ navigation, route }) {
                     : ""}
                 </Text>
               </View>
-              <View
+              {/* <View
                 style={{
                   width: "100%",
                   flexDirection: "row",
@@ -140,7 +147,7 @@ export default function ScheduleDetailRequest({ navigation, route }) {
                 <Text style={styles.info}>
                   {infoScheduleRequest ? infoScheduleRequest.reservationId : ""}
                 </Text>
-              </View>
+              </View> */}
               <View
                 style={{
                   width: "100%",
@@ -199,11 +206,11 @@ export default function ScheduleDetailRequest({ navigation, route }) {
               <Text
                 style={[
                   styles.info,
-                  { color: "red", textDecorationLine: "underline" },
+                  { color: "red", textDecorationLine: "underline", textAlign: "center" },
                 ]}
               >
                 {infoScheduleRequest
-                  ? infoScheduleRequest.statusReservation
+                  ? statusReservation[infoScheduleRequest.statusReservation]
                   : ""}
               </Text>
             </View>
@@ -261,7 +268,11 @@ export default function ScheduleDetailRequest({ navigation, route }) {
               <View style={{ width: "60%", flexDirection: "row" }}>
                 <Text style={styles.title}>Loại phòng: </Text>
                 <Text style={styles.info}>
-                  {infoScheduleRequest ? infoScheduleRequest.room.typeRoom : ""}
+                  {infoScheduleRequest.room.typeRoom == "DEFAULT"
+                    ? "Mặc định"
+                    : infoScheduleRequest.room.typeRoom == "VIP"
+                    ? "VIP"
+                    : "Hội nghị"}
                 </Text>
               </View>
               <View style={{ width: "40%", flexDirection: "row" }}>
@@ -310,7 +321,7 @@ export default function ScheduleDetailRequest({ navigation, route }) {
               <Text style={styles.info}>
                 {infoScheduleRequest.timeCancel != null
                   ? formatUTC7(infoScheduleRequest.timeCancel)
-                  : "Chưa cập nhật"}
+                  : "Không có"}
               </Text>
             </View>
             <View

@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { axiosConfig } from "../../utilities";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { updateNumber } from "../../slice/NotificationSlice";
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import { faCalendar, faCalendarDay } from "@fortawesome/free-solid-svg-icons";
 
 export default function Notification({navigation}) {
     const notification = useSelector((state) => state.notification.list);
@@ -40,6 +42,11 @@ export default function Notification({navigation}) {
                 });
         }
         updateRead();
+
+        notification.forEach(item => {
+            console.log(item.message + " " + item.read);
+            
+        })
     }, [notification])
 
     const formatHourVietNam = (dateFormat) => {
@@ -76,7 +83,8 @@ export default function Notification({navigation}) {
                         backgroundColor: "#E7F3FF",
                         marginBottom: 10,
                         borderRadius: 10,
-                        borderLeftWidth: 5
+                        borderLeftWidth: 5,
+                        marginLeft: 3
                         },
                         index == 0 && {
                             borderTopWidth: 1,
@@ -87,11 +95,18 @@ export default function Notification({navigation}) {
                         <Text style={{fontSize: 15, fontWeight: "bold"}}>
                             {notification.message}
                         </Text>
-                        <Text style={{
-                            marginTop: 7
+                        <View style={{
+                            flexDirection: "row",
+                            alignItems: "center"
                         }}>
-                            {formatHourVietNam(notification.createdAt)}
-                        </Text>
+                            <FontAwesomeIcon color="#559BF7" size={13} style={{marginTop: 6}} icon={faCalendar} />
+                            <Text style={{
+                                marginTop: 7,
+                                marginLeft: 7
+                            }}>
+                                {formatHourVietNam(notification.createdAt)}
+                            </Text>
+                        </View>
                     </View> 
                 ))}
                 

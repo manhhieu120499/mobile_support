@@ -49,10 +49,10 @@ const LoginScreen = ({ navigation, route }) => {
           userName: username,
           password: password,
         });
-        
+
         if (res.status == 200) {
           const dataUser = jwtDecode(res.data);
-          
+
           if (dataUser.role != "ADMIN") {
             await AsyncStorage.setItem("token", res.data);
             const response = await axiosConfig().get(
