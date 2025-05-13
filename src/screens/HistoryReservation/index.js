@@ -75,7 +75,7 @@ const HistoryReservation = ({navigation, route}) => {
                     backgroundColor: "white",
                     paddingBottom: 30
                 }}>
-                {listSchedule.map((item, index) => (
+                {listSchedule.reverse().map((item, index) => (
                     <ScheduleUserItem handleTransferScreenScheduleDetail={handleTransferScreenScheduleDetail} key={index} data={item} />
                 ))}
                 </View>

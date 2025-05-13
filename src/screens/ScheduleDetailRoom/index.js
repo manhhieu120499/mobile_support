@@ -10,6 +10,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  StatusBar,
 } from "react-native";
 import { Button, Card } from "react-native-paper";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
@@ -92,6 +93,28 @@ export default function ScheduleDetailRoom({ navigation, route }) {
   const imageUrl =
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc9APxkj0xClmrU3PpMZglHQkx446nQPG6lA&s";
 
+    function getTimeDifference(startTime, endTime) {
+      // Chuyển đổi chuỗi thời gian sang đối tượng Date
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+    
+      // Tính chênh lệch theo mili giây
+      let diffMs = end - start;
+    
+      // Nếu thời gian kết thúc nhỏ hơn thời gian bắt đầu (qua ngày hôm sau)
+      if (diffMs < 0) {
+        diffMs += 24 * 60 * 60 * 1000; // cộng thêm 24 giờ
+      }
+    
+      // Tính giờ, phút, giây
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+    
+      return { hours, minutes, seconds };
+    }
+    
+
   const fetchSchedule = async () => {
     try {
       const res = await axiosConfig().get(
@@ -109,6 +132,12 @@ export default function ScheduleDetailRoom({ navigation, route }) {
         attendantName: itemAttendant.employeeName,
         attendantPhone: itemAttendant.phone,
       }));
+      const timeClock = getTimeDifference(res.data.timeStart, res.data.timeEnd);
+      setClock({
+        hour: timeClock.hours,
+        minutes: timeClock.minutes,
+        second: timeClock.seconds,
+      });
       setSchedule(res.data);
       setListService(listServiceData);
       setListParticipant(listParticipant);
@@ -154,7 +183,7 @@ export default function ScheduleDetailRoom({ navigation, route }) {
   // thông báo khi hết giờ
   useEffect(() => {
     if (clock.hour == 0 && clock.minutes == 0 && clock.second == 0) {
-      setIsOpenPopup((prev) => ({ ...prev, success: true }));
+      setIsOpenPopup((prev) => ({ warning: false, success: true }));
     }
   }, [clock]);
 
@@ -166,12 +195,13 @@ export default function ScheduleDetailRoom({ navigation, route }) {
     const timeEndFormat = new Date(`${currentDate}T${timeEnd}:00`)
       .toISOString()
       .split("T")[1];
-    // const result =
-    //   transferTimeToMinutes(currentTime.toISOString().split("T")[1]) -
-    //   transferTimeToMinutes(timeEndFormat);
-    const result = -1;
-    if (result < 0) {
-      setIsOpenPopup((prev) => ({ ...prev, warning: true }));
+    const result =
+      transferTimeToMinutes(currentTime.toISOString().split("T")[1]) -
+      transferTimeToMinutes(timeEndFormat);
+    //const result = -1;
+    console.log("result", result);
+    if (result > 0) {
+      setIsOpenPopup((prev) => ({ success: false, warning: true }));
     }
   };
 
@@ -322,14 +352,6 @@ export default function ScheduleDetailRoom({ navigation, route }) {
               </Text>
               <Text style={styles.info}>
                 {schedule ? formatUTC7(schedule.timeCheckIn) : ""}
-              </Text>
-            </View>
-            <View style={styles.informationItem}>
-              <Text style={[styles.title, { width: 200 }]}>
-                Thời gian trả phòng:{" "}
-              </Text>
-              <Text style={styles.info}>
-                {schedule ? formatUTC7(schedule.timeCheckOut) : ""}
               </Text>
             </View>
             <View
@@ -688,10 +710,10 @@ export default function ScheduleDetailRoom({ navigation, route }) {
         status={"warning"}
         handleOnPopup={(type) => {
           if (type == "Hủy") {
-            setIsOpenPopup((prev) => ({ ...prev, warning: false }));
+            setIsOpenPopup((prev) => ({ success: true, warning: false }));
           } else if (type == "OK") {
-            setIsOpenPopup((prev) => ({ ...prev, warning: false }));
-            navigation.navigate("CreateSchedule");
+            setIsOpenPopup((prev) => ({ success: true, warning: false }));
+            navigation.navigate("Tabs");
           }
         }}
         titleButtonReject={"Hủy"}
@@ -704,10 +726,11 @@ export default function ScheduleDetailRoom({ navigation, route }) {
         status={"success"}
         handleOnPopup={(type) => {
           setIsOpenPopup((prev) => ({ ...prev, success: false }));
-          navigation.navigate("CreateSchedule");
+          navigation.navigate("Tabs");
         }}
         titleButtonAccept={"Rời phòng"}
       />
+      <StatusBar style="auto"/>
     </DefaultLayout>
   );
 }

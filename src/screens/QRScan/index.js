@@ -72,33 +72,37 @@ const QRScanScreen = ({ navigation }) => {
       console.log(resp);
       if (resp.status == 200) {
         setMessage({
-          body: "Check in thành công",
+          body: resp.data.message,
           status: "success",
           reason: "",
         });
         setInfo({
-          reservationId: resp.data.decryptedData.split("=")[1],
+          reservationId: resp.data.reservationId,
           employeeId: user.employeeId,
         });
-      } else {
-        setMessage({
-          body: "Giải mã qr không thành công\nVui lòng thử lại",
-          status: "error",
-          reason: "duplicated",
-        });
-        setIsOpenPopup((prev) => ({ ...prev, err: true }));
-      }
+        if(resp.data.message == "Checkin thành công") {
+        setIsOpenPopup((prev) => ({ error: false, success: true }));
+        }else{
+          setMessage({
+            body: resp.data.message,
+            status: "error",
+            reason: "duplicated",
+          });
+          setIsOpenPopup((prev) => ({ error: true, success: false }));
+        }
+      } 
     } catch (err) {
       setMessage({
-        body: "Check in thất bại",
+        body: err.response.data.message,
         status: "error",
         reason: "duplicated",
       });
+      setIsOpenPopup((prev) => ({ success: false, error: true }));
       console.log(err);
     }
   };
 
-  if (dataQR != "") handleCheckInRoom(dataQR);
+  // if (dataQR != "") handleCheckInRoom(dataQR);
 
   const handleErrorDuplicatedSchedule = () => {
     setIsOpenModalDetail(true);
@@ -135,7 +139,8 @@ const QRScanScreen = ({ navigation }) => {
           if (data && !qrLock.current) {
             qrLock.current = true;
             console.log("Retrieved data: ", data);
-            setDataQR(data);
+            // setDataQR(data);
+            await handleCheckInRoom(data);
             setTimeout(async () => {
               await Linking.openURL(data);
             }, 300);
